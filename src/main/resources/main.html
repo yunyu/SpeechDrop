@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SpeechDrop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.1/vue.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.4/picnic.min.css" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <style>
+  body {
+    background-color: whitesmoke;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  .container {
+    padding: 20px;
+    height: 100%;
+  }
+
+  .card {
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+    border: none;
+    margin-bottom: 2px;
+  }
+
+  .main-card {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+  }
+
+  .input-hint {
+    font-size: 14px;
+    margin-top: 6px;
+    color: #0074d9;
+  }
+
+  .card > footer {
+    border-top:1px solid #eee;
+    font-size:14px;
+    color: #777;
+    text-align:center;
+  }
+
+  .room-controls {
+    padding:25px 30px 20px 30px;
+    text-align:center;
+  }
+
+  .room-form > .room-text {
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    box-shadow: inset 0px -1px 0px #fff;
+    border-bottom: 0;
+  }
+
+  .room-form > .button {
+    width: 100%;
+    margin-top: 0px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+
+  .input-invalid {
+    border: 1px solid #b72a2a !important;
+  }
+
+  .sep-text {
+    position: fixed;
+    left: 0;
+    right: 0;
+    margin-top: -15px;
+    text-align: center;
+    margin-left: 125px;
+    margin-right: 125px;
+    background: #fff;
+    color: #ccc;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <article class="card main-card">
+      <header>
+        <h3>SpeechDrop</h3>
+      </header>
+      <div class="room-controls" style="border-bottom:1px solid #eee;padding-bottom:25px">
+        <div id="code-input">
+          <input id="code-input-box" v-model="code" placeholder="Type an existing room code" maxlength="6"
+                 autocorrect="off" autocapitalize="none">
+          <div class="input-hint" v-html="produceHint(code)"></div>
+        </div>
+      </div>
+      <div class="sep-text">OR</div>
+      <div class="room-controls" style="padding-top:30px">
+          <form class="room-form" action="/makeroom" method="post">
+            <input type="hidden" name="_csrf_token" value="{% CSRF_TOKEN %}">
+            <input class="room-text" type="text" name="name" pattern=".{1,60}" maxlength="60" required
+                   placeholder="Type a new room name">
+            <input class="button" type="submit" value="Make Room">
+          </form>
+      </div>
+    </article>
+  </div>
+  <script>var produceHint=function(a){var b=document.getElementById("code-input-box");if(a.length<maxChars){b.className="";var c=maxChars-a.length;return c+" character"+(c>1?"s":"")+" left"}var d=new XMLHttpRequest;return d.open("GET",window.location.href+a+"/index",!1),d.send(),200!=d.status?(b.className="input-invalid",'<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=a,"Taking you there...")},maxChars=6,codeInput=new Vue({el:"#code-input",data:{code:""}});</script>
+</body>
+</html>

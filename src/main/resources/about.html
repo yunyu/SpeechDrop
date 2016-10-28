@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>About | SpeechDrop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.4/picnic.min.css" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <style>
+  body {
+    background-color: whitesmoke;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  .container {
+    padding: 20px;
+    padding-top: 100px;
+    height: 100%;
+  }
+
+  .card {
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+    border: none;
+    margin-bottom: 2px;
+  }
+
+  .main-card {
+    left: 50%;
+    transform: translate(-50%);
+    max-width: 640px;
+    margin-bottom: 40px;
+  }
+
+  .card > footer {
+    border-top:1px solid #eee;
+    font-size:14px;
+    color: #777;
+    text-align:center;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+  <nav>
+  <a href="/" class="brand">
+    <span>SpeechDrop</span>
+  </a>
+  <div class="menu">
+    <a href="/about" class="pseudo button">About</a>
+  </div>
+</nav>
+    <article class="card main-card">
+      <header>
+        <h3>About SpeechDrop</h3>
+      </header>
+      <div style="padding:20px;margin-bottom:10px">
+      <h4>What file formats are allowed?</h4>
+      <p>You can upload DOC, DOCX, ODT, RTF, PDF, and TXT files that are up to 5MB.</p>
+      <h4>Why should I use this over {insert competing service}?</h4>
+      <p>SpeechDrop supports drag-and-drop, has auto-refreshing, preserves filenames, lacks ambiguous characters in room codes, looks better (especially on mobile devices), uses HTTPS, and most importantly, it has a cooler name and fancy animations.</p>
+      <h4>How long are files kept for?</h4>
+      <p>Files are deleted two weeks after room creation.</p>
+      <h4>Which browsers are supported?</h4>
+      <p>Modern versions of Chrome, Safari, Firefox, Edge, Opera, and IE11 will work.</p>
+      <h4>What's this powered by?</h4>
+      <p>This is hosted on a 32GB RAM, i7 4770k box from OVH. The backend uses nginx and pippo, and the frontend uses picnic.css and vue.js.</p>
+      <p>The source is available <a href="https://github.com/yunyul/SpeechDrop">on GitHub</a>.</p>
+      <p>Currently running version {% VERSION %}.</p>
+      </div>
+      <footer>
+        Contact: yunyu.lin@vanderbilt.edu
+      </footer>
+    </article>
+  </div>
+</body>
+</html>

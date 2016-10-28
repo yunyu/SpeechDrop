@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% NAME %} | SpeechDrop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.1/vue.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.4/picnic.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <style>
+    body {
+        background-color: whitesmoke;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .container {
+        padding: 70px 10px 20px 20px;
+        padding-top: 70px;
+    }
+
+    .card-wrapper {
+        padding: 4px;
+    }
+
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border: none;
+        margin-bottom: 0px;
+    }
+
+    .card-button-container {
+        display: flex;
+        align-items: stretch;
+        border-top: 1px solid #eee;
+    }
+
+    .card-button-left {
+        border-right: 1px solid #eee;
+    }
+
+    .card-button {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .card-button:hover {
+        background: #f2f2f2;
+    }
+
+    .file-header {
+        height: 149px;
+        background-image: url("//media.speechdrop.net/img/doc-bg.png");
+        background-size: 100px;
+        background-repeat: no-repeat;
+        background-position: right bottom;
+    }
+
+    .file-header > h3 {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        -ms-word-break: break-all;
+        word-break: break-all;
+        color: black;
+    }
+
+    .file-date {
+        padding-top: 4px;
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    .upload-wrapper {
+        padding-bottom: 0px;
+    }
+
+    .upload-card {
+        height: 196px;
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1);
+    }
+
+    #file-grid {
+        padding: 5px;
+    }
+
+    #file-dropzone {
+        height: 100%;
+        padding: 15px;
+        padding-top: 22px;
+        background-color: #0074d9;
+        color: white;
+        text-align: center;
+        transition: all 0.5s ease;
+        cursor: pointer;
+    }
+
+    .dropzone-success {
+        background: #68bd77 !important;
+    }
+
+    .dropzone-fail {
+        background: #b72a2a !important;
+    }
+
+    .passthrough-pointer {
+        pointer-events: none;
+    }
+
+    .room-header {
+        margin-bottom: 10px;
+    }
+
+    .room-name {
+        font-size: 1.5em;
+        border-right: 2px solid #ddd;
+        padding-right: 15px;
+    }
+
+    .room-code {
+        font-size: 1.5em;
+        padding-left: 10px;
+        color: #777;
+    }
+
+    @media screen and (max-width: 480px) {
+        .card-button-container {
+            font-size: 12px;
+        }
+
+        #upload-text {
+            font-size: 14px;
+        }
+
+        .file-header > h3 {
+            font-size: 16px;
+            line-height: 25px !important;
+        }
+
+        .file-date {
+            padding-top: 0;
+        }
+
+        .upload-card {
+            height: 188px;
+        }
+
+        .room-name, .room-code {
+            font-size: 1em;
+        }
+    }
+
+    .grid-entries-enter-active, .grid-entries-leave-active {
+        transition: all 0.5s;
+    }
+
+    .grid-entries-enter, .grid-entries-leave-active > .card {
+        opacity: 0;
+        transform: scale(0.25, 0.25);
+    }
+
+    .grid-entries-leave-active {
+        position: absolute;
+        z-index: -1
+    }
+
+    .grid-entries-leave-active > .card {
+        transition: all 0.2s;
+    }
+
+    .grid-entries-move {
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .delete-button {
+        position: absolute;
+        right: 10px;
+        padding: 4px;
+        top: 12px;
+        line-height: 10px;
+        color: #ddd;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 2;
+        transition: all 0.25s;
+    }
+
+    .delete-button:hover {
+        color: #b72a2a;
+    }
+    </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="brand">
+    <span>SpeechDrop</span>
+  </a>
+  <div class="menu">
+    <a href="/about" class="pseudo button">About</a>
+  </div>
+</nav>
+<div class="container">
+    <div class="room-header">
+        <span class="room-name">{% NAME %}</span>
+        <span class="room-code">{% ROOM %}</span>
+    </div>
+    <transition-group id="file-grid" name="grid-entries" class="flex two three-800 five-1200" tag="div">
+        <div class="card-wrapper upload-wrapper">
+            <article class="card upload-card">
+                <div id="file-dropzone">
+                    <img class="passthrough-pointer" src="//media.speechdrop.net/img/upload-icon.png" width="80" height="80" alt="Upload icon"/>
+                    <p id="upload-text" class="passthrough-pointer"></p>
+                </div>
+            </article>
+        </div>
+        <div class="card-wrapper" v-for="fileEntry in fileList" v-bind:key="fileEntry.origPos">
+            <article class="card">
+                <div v-on:click.self="deleteFile(fileEntry.origPos)" class="delete-button">&#215;</div>
+                <a target="_blank" v-bind:href="fileEntry.url">
+                <header class="file-header">
+                    <h3>{{ fileEntry.name }}</h3>
+                    <div class="file-date">{{ fileEntry.ctime | formatDate }}</div>
+                </header>
+                </a>
+                <div class="card-button-container">
+                    <a target="_blank" v-bind:href="'https://docs.google.com/gview?url=' + fileEntry.url" class="half card-button card-button-left">Preview</a>
+                    <a v-bind:href="fileEntry.url" class="half card-button" download>Download</a>
+                </div>
+            </article>
+        </div>
+    </transition-group>
+</div>
+<script>var mediaUrl='https://media.speechdrop.net/uploads/',roomId="{% ROOM %}",csrf="{% CSRF_TOKEN %}",allowedMimes="{% ALLOWED_MIMES %}",initialFiles={% INDEX %};
+function setUploadText(a,b){a.getElementsByTagName("p")[0].innerHTML=b}function resetDropzone(a){setUploadText(a,"Drag files here or click to upload."),a.className="dz-clickable"}Vue.filter("formatDate",function(a){var b=new Date(a),c=b.getHours(),d=b.getMinutes(),e=c>=12?"pm":"am";c%=12,c=c?c:12,d=d<10?"0"+d:d;var f=c+":"+d+" "+e;return f});var processFileList=function(a){for(var b=[],c=0;c<a.length;c++)a[c]&&(a[c].url=mediaUrl+roomId+"/"+c+"/"+a[c].name,a[c].origPos=c,b.unshift(a[c]));return b},deleteFile=function(a){var b=new XMLHttpRequest;b.open("POST","/{% ROOM %}/delete",!0);for(var c=0;c<uploadedFiles.fileList.length;c++)if(uploadedFiles.fileList[c].origPos==a){uploadedFiles.fileList.splice(c,1);break}b.onreadystatechange=function(){4==b.readyState&&200==b.status&&processFileList(JSON.parse(b.responseText))};var d="fileIndex="+a+"&_csrf_token="+csrf;b.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),b.send(d)},uploadedFiles=new Vue({el:"#file-grid",data:{fileList:processFileList(initialFiles)}}),dropCard=new Dropzone("div#file-dropzone",{url:"/"+roomId+"/upload",addedfile:function(a){},uploadprogress:function(a,b,c){setUploadText(dropCard.element,"Uploading ("+Math.floor(b)+"%)")},success:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload successful!"),dropCard.element.className+=" dropzone-success",uploadedFiles.fileList=processFileList(JSON.parse(b)),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},error:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload failed, please retry."),dropCard.element.className+=" dropzone-fail",console.log(b),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},sending:function(a,b,c){c.append("_csrf_token",csrf)},createImageThumbnails:!1,maxFilesize:5,uploadMultiple:!1,acceptedFiles:allowedMimes}),refreshCards=function(){var a=new XMLHttpRequest;a.open("GET","/"+roomId+"/index?_="+Date.now(),!0),a.onload=function(b){4===a.readyState&&(200===a.status?uploadedFiles.fileList=processFileList(JSON.parse(a.responseText)):console.error(a.statusText))},a.send(null)};refreshCards(),setInterval(refreshCards,3e3),resetDropzone(dropCard.element);</script>
+</body>
+</html>

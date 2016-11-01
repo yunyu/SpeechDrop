@@ -8,6 +8,7 @@ import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import lombok.Getter;
 import ro.pippo.core.Application;
+import ro.pippo.core.HttpConstants;
 import ro.pippo.core.PippoSettings;
 import ro.pippo.core.RuntimeMode;
 import ro.pippo.core.route.CSRFHandler;
@@ -120,7 +121,8 @@ public class SpeechDropApplication extends Application {
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 try {
-                    ctx.send(r.getIndex());
+                    ctx.getResponse().contentType(HttpConstants.ContentType.APPLICATION_JSON);
+                    ctx.getResponse().send(r.getIndex());
                 } catch (JsonProcessingException e) {
                     ctx.status(500);
                     e.printStackTrace();

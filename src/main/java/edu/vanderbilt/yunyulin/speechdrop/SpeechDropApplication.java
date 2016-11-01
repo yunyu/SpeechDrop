@@ -93,6 +93,7 @@ public class SpeechDropApplication extends Application {
             }
         });
 
+        GET("/{roomid}/", ctx -> ctx.redirect("/" + ctx.getParameter("roomid").toString()));
         ALL("/{roomid}", csrfHandler);
         GET("/{roomid}", ctx -> {
             String roomId = ctx.getParameter("roomid").toString();

@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class Bootstrap {
     public static String VERSION;
-    public static int TWO_WEEKS = 2 * 7 * 24 * 60 * 60;
+    public static int TWO_MONTHS = 60 * 24 * 60 * 60;
 
     public static void main(String[] args) throws IOException {
         PippoSettings settings = new PippoSettings(RuntimeMode.PROD);
@@ -42,7 +42,7 @@ public class Bootstrap {
             HashSessionManager sessionManager = new HashSessionManager();
             try {
                 sessionManager.setStoreDirectory(new File("sessions-storage"));
-                sessionManager.setMaxInactiveInterval(TWO_WEEKS);
+                sessionManager.setMaxInactiveInterval(TWO_MONTHS);
             } catch (IOException e) {
                 throw new PippoRuntimeException(e);
             }

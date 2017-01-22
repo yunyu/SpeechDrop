@@ -94,6 +94,14 @@
         cursor: pointer;
     }
 
+    #file-dropzone:hover, #file-dropzone:focus {
+        box-shadow: inset 0 0 0 99em rgba(255,255,255,0.2);
+    }
+
+    #file-dropzone:active {
+        box-shadow: inset 0 0 0 99em rgba(17,17,17,0.2);
+    }
+
     .dropzone-success {
         background: #68bd77 !important;
     }
@@ -122,6 +130,24 @@
         color: #777;
     }
 
+    .download-all-button {
+        float: right;
+        margin: 0 10px;
+    }
+
+    .header-button-img {
+        padding-top: 2px;
+        height: 1em;
+    }
+
+    .container [data-tooltip]:after {
+        font-size: .75em;
+    }
+
+    .container .tooltip-left:after, .container .tooltip-left:before {
+        margin-top: 5px;
+    }
+
     @media screen and (max-width: 480px) {
         .card-button-container {
             font-size: 12px;
@@ -144,8 +170,29 @@
             height: 188px;
         }
 
+        .room-name {
+            padding-right: 10px;
+        }
+
+        .room-code {
+            padding-left: 5px;
+        }
+
         .room-name, .room-code {
             font-size: 1em;
+        }
+
+        .download-all-button {
+            padding: 0em .5em;
+        }
+
+        .header-button-img {
+            padding-top: 0px;
+            height: 0.75em;
+        }
+
+        .container .tooltip-left:after, .container .tooltip-left:before {
+            margin-top: 0px;
         }
     }
 
@@ -169,6 +216,14 @@
 
     .grid-entries-move {
         transition: transform 0.5s ease-in-out;
+    }
+
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity .5s;
+    }
+
+    .fade-enter, .fade-leave-active {
+        opacity: 0;
     }
 
     .delete-button {
@@ -198,7 +253,14 @@
     <a href="/about" class="pseudo button">About</a>
   </div>
 </nav>
-<div class="container">
+<div class="container" id="room-container">
+    <transition name="fade">
+        <a v-if="fileList.length > 0"
+           href="/{% ROOM %}/archive" data-tooltip="Download all files" class="button download-all-button tooltip-left">
+            <img src="https://media.speechdrop.net/img/download-folder.svg" class="header-button-img"
+                 alt="Download icon"/>
+        </a>
+    </transition>
     <div class="room-header">
         <span class="room-name">{% NAME %}</span>
         <span class="room-code">{% ROOM %}</span>
@@ -230,6 +292,6 @@
     </transition-group>
 </div>
 <script>var mediaUrl='https://media.speechdrop.net/uploads/',roomId="{% ROOM %}",csrf="{% CSRF_TOKEN %}",allowedMimes="{% ALLOWED_MIMES %}",initialFiles={% INDEX %};
-function setUploadText(a,b){a.getElementsByTagName("p")[0].innerHTML=b}function resetDropzone(a){setUploadText(a,"Drag files here or click to upload."),a.className="dz-clickable"}Vue.filter("formatDate",function(a){var b=new Date(a),c=b.getHours(),d=b.getMinutes(),e=c>=12?"pm":"am";c%=12,c=c?c:12,d=d<10?"0"+d:d;var f=c+":"+d+" "+e;return f});var processFileList=function(a){for(var b=[],c=0;c<a.length;c++)a[c]&&(a[c].url=mediaUrl+roomId+"/"+c+"/"+a[c].name,a[c].origPos=c,b.unshift(a[c]));return b},deleteFile=function(a){var b=new XMLHttpRequest;b.open("POST","/{% ROOM %}/delete",!0);for(var c=0;c<uploadedFiles.fileList.length;c++)if(uploadedFiles.fileList[c].origPos==a){uploadedFiles.fileList.splice(c,1);break}b.onreadystatechange=function(){4==b.readyState&&200==b.status&&processFileList(JSON.parse(b.responseText))};var d="fileIndex="+a+"&_csrf_token="+csrf;b.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),b.send(d)},uploadedFiles=new Vue({el:"#file-grid",data:{fileList:processFileList(initialFiles)}}),dropCard=new Dropzone("div#file-dropzone",{url:"/"+roomId+"/upload",addedfile:function(a){},uploadprogress:function(a,b,c){setUploadText(dropCard.element,"Uploading ("+Math.floor(b)+"%)")},success:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload successful!"),dropCard.element.className+=" dropzone-success",uploadedFiles.fileList=processFileList(JSON.parse(b)),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},error:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload failed, please retry."),dropCard.element.className+=" dropzone-fail",console.log(b),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},sending:function(a,b,c){c.append("_csrf_token",csrf)},createImageThumbnails:!1,maxFilesize:5,uploadMultiple:!1,acceptedFiles:allowedMimes}),refreshCards=function(){var a=new XMLHttpRequest;a.open("GET","/"+roomId+"/index?_="+Date.now(),!0),a.onload=function(b){4===a.readyState&&(200===a.status?uploadedFiles.fileList=processFileList(JSON.parse(a.responseText)):console.error(a.statusText))},a.send(null)};refreshCards(),setInterval(refreshCards,3e3),resetDropzone(dropCard.element);</script>
+function setUploadText(a,b){a.getElementsByTagName("p")[0].innerHTML=b}function resetDropzone(a){setUploadText(a,"Drag files here or click to upload."),a.className="dz-clickable"}Vue.filter("formatDate",function(a){var b=new Date(a),c=b.getHours(),d=b.getMinutes(),e=c>=12?"pm":"am";c%=12,c=c?c:12,d=d<10?"0"+d:d;var f=c+":"+d+" "+e;return f});var processFileList=function(a){for(var b=[],c=0;c<a.length;c++)a[c]&&(a[c].url=mediaUrl+roomId+"/"+c+"/"+a[c].name,a[c].origPos=c,b.unshift(a[c]));return b},deleteFile=function(a){var b=new XMLHttpRequest;b.open("POST","/{% ROOM %}/delete",!0);for(var c=0;c<uploadedFiles.fileList.length;c++)if(uploadedFiles.fileList[c].origPos==a){uploadedFiles.fileList.splice(c,1);break}b.onreadystatechange=function(){4==b.readyState&&200==b.status&&processFileList(JSON.parse(b.responseText))};var d="fileIndex="+a+"&_csrf_token="+csrf;b.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),b.send(d)},uploadedFiles=new Vue({el:"#room-container",data:{fileList:processFileList(initialFiles)}}),dropCard=new Dropzone("div#file-dropzone",{url:"/"+roomId+"/upload",addedfile:function(a){},uploadprogress:function(a,b,c){setUploadText(dropCard.element,"Uploading ("+Math.floor(b)+"%)")},success:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload successful!"),dropCard.element.className+=" dropzone-success",uploadedFiles.fileList=processFileList(JSON.parse(b)),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},error:function(a,b){resetDropzone(dropCard.element),setUploadText(dropCard.element,"Upload failed, please retry."),dropCard.element.className+=" dropzone-fail",console.log(b),setTimeout(function(){resetDropzone(dropCard.element)},2e3)},sending:function(a,b,c){c.append("_csrf_token",csrf)},createImageThumbnails:!1,maxFilesize:5,uploadMultiple:!1,acceptedFiles:allowedMimes}),refreshCards=function(){var a=new XMLHttpRequest;a.open("GET","/"+roomId+"/index?_="+Date.now(),!0),a.onload=function(b){4===a.readyState&&(200===a.status?uploadedFiles.fileList=processFileList(JSON.parse(a.responseText)):console.error(a.statusText))},a.send(null)};refreshCards(),setInterval(refreshCards,3e3),resetDropzone(dropCard.element);</script>
 </body>
 </html>

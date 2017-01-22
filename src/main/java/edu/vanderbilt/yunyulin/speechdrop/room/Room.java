@@ -5,6 +5,9 @@ import edu.vanderbilt.yunyulin.speechdrop.handlers.UploadHandler;
 import lombok.Getter;
 import ro.pippo.core.route.RouteContext;
 
+import java.io.File;
+import java.util.Collection;
+
 public class Room {
     @Getter
     private String id;
@@ -24,6 +27,10 @@ public class Room {
 
     public String getIndex() throws JsonProcessingException {
         return uploadHandler.getIndex().getIndexString();
+    }
+
+    public Collection<File> getFiles() {
+        return uploadHandler.getIndex().getFiles();
     }
 
     public void deleteFile(int index) {

@@ -15,12 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -87,6 +82,19 @@ public class IndexHandler {
                 e.printStackTrace();
             }
         }, tag);
+    }
+
+    public Collection<File> getFiles() {
+        List<File> files = new ArrayList<>(entries.size());
+        int index = 0;
+        for (FileEntry entry : entries) {
+            if (entry != null) {
+                File fileDir = new File(uploadDirectory, Integer.toString(index));
+                files.add(new File(fileDir, entry.name));
+            }
+            index++;
+        }
+        return files;
     }
 
     public String getIndexString() throws JsonProcessingException {

@@ -3,19 +3,21 @@ package edu.vanderbilt.yunyulin.speechdrop;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Joiner;
 import com.google.common.html.HtmlEscapers;
+import com.google.common.io.ByteStreams;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-import lombok.Getter;
-import ro.pippo.core.Application;
-import ro.pippo.core.HttpConstants;
-import ro.pippo.core.PippoSettings;
-import ro.pippo.core.RuntimeMode;
+import ro.pippo.core.*;
 import ro.pippo.core.route.CSRFHandler;
 import ro.pippo.core.route.RouteContext;
+import ro.pippo.core.util.IoUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
@@ -34,6 +36,7 @@ public class SpeechDropApplication extends Application {
             "application/msword", // doc
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // docx
             "application/vnd.oasis.opendocument.text", // odt
+            "application/x-iwork-pages-sffpages", // pages
             "application/pdf", // pdf
             "text/plain", // txt
             "text/rtf", // rtf
@@ -85,6 +88,7 @@ public class SpeechDropApplication extends Application {
         POST("/makeroom", ctx -> {
             String roomName = ctx.getParameter("name").toString();
             // getLogger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
+            if (roomName != null) roomName = roomName.trim();
             if (roomName == null || roomName.length() == 0 || roomName.length() > 60) {
                 ctx.redirect("/");
             } else {
@@ -127,6 +131,29 @@ public class SpeechDropApplication extends Application {
                 } catch (JsonProcessingException e) {
                     ctx.status(500);
                     e.printStackTrace();
+                }
+            }
+        });
+
+        GET("/{roomid}/archive", ctx -> {
+            String roomId = ctx.getParameter("roomid").toString();
+            if (!roomHandler.roomExists(roomId)) {
+                ctx.status(404);
+            } else {
+                Room r = roomHandler.getRoom(roomId);
+                Collection<File> files = r.getFiles();
+                String outFile = r.getData().name.trim() + ".zip";
+                Response res = ctx.getResponse();
+                if (files.size() == 0) {
+                    res.file(outFile, Util.getEmptyZipInputStream());
+                } else {
+                    OutputStream out = Util.getResponseOutputStream(res, outFile);
+                    try {
+                        Util.zip(files, out);
+                        res.getHttpServletResponse().flushBuffer();
+                    } catch (IOException e) {
+                        throw new PippoRuntimeException(e);
+                    }
                 }
             }
         });

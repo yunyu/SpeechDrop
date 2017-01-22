@@ -10,6 +10,7 @@ server {
        index index.html;
 
        server_name speechdrop.net;
+       client_max_body_size 5m;
 
        location / {
                 proxy_set_header        Host $host:$server_port;

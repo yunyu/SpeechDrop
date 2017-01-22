@@ -40,7 +40,7 @@ var deleteFile = function(fileIndex) {
 };
 
 var uploadedFiles = new Vue({
-    el: '#file-grid',
+    el: '#room-container',
     data: {
         fileList: processFileList(initialFiles)
     }

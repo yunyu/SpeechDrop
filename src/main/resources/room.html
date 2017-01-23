@@ -120,13 +120,18 @@
 
     .room-name {
         font-size: 1.5em;
-        border-right: 2px solid #ddd;
-        padding-right: 15px;
+    }
+
+    .room-divider {
+        width: 2px;
+        height: 35px;
+        display: inline-block;
+        background: #ddd;
+        margin: 0 10px -7px 10px;
     }
 
     .room-code {
         font-size: 1.5em;
-        padding-left: 10px;
         color: #777;
     }
 
@@ -170,12 +175,9 @@
             height: 188px;
         }
 
-        .room-name {
-            padding-right: 10px;
-        }
-
-        .room-code {
-            padding-left: 5px;
+        .room-divider {
+            height: 24px;
+            margin: 0 5px -5px 5px;
         }
 
         .room-name, .room-code {
@@ -263,6 +265,7 @@
     </transition>
     <div class="room-header">
         <span class="room-name">{% NAME %}</span>
+        <div class="room-divider"></div>
         <span class="room-code">{% ROOM %}</span>
     </div>
     <transition-group id="file-grid" name="grid-entries" class="flex two three-800 five-1200" tag="div">

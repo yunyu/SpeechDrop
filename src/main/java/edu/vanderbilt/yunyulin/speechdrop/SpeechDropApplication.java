@@ -3,18 +3,16 @@ package edu.vanderbilt.yunyulin.speechdrop;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Joiner;
 import com.google.common.html.HtmlEscapers;
-import com.google.common.io.ByteStreams;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
+import lombok.Getter;
 import ro.pippo.core.*;
 import ro.pippo.core.route.CSRFHandler;
 import ro.pippo.core.route.RouteContext;
-import ro.pippo.core.util.IoUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,11 +20,15 @@ import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
+import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.LOCALHOST;
+import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.SIO_PORT;
+
 public class SpeechDropApplication extends Application {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     private static Logger logger;
 
+    // Lombok getter won't work with import static
     public static Logger getLogger() {
         return logger;
     }
@@ -48,6 +50,7 @@ public class SpeechDropApplication extends Application {
     private RoomHandler roomHandler = new RoomHandler();
     private PurgeTask purgeTask = new PurgeTask(roomHandler);
     private CSRFHandler csrfHandler = new CSRFHandler();
+    private Broadcaster broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
 
     String mainPage;
     String roomTemplate;
@@ -68,6 +71,8 @@ public class SpeechDropApplication extends Application {
         this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", Joiner.on(",").join(allowedMimeTypes));
         this.aboutPage = aboutPage.replace("{% VERSION %}", Bootstrap.VERSION);
 
+        // Initialize broadcaster
+        broadcaster.start();
     }
 
     @Override
@@ -169,7 +174,9 @@ public class SpeechDropApplication extends Application {
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 try {
-                    ctx.send(r.handleUpload(ctx));
+                    String index = r.handleUpload(ctx);
+                    ctx.send(index);
+                    broadcaster.publishUpdate(r.getId(), index);
                 } catch (Exception e) {
                     ctx.status(500);
                     ctx.send(e.getMessage());
@@ -188,13 +195,21 @@ public class SpeechDropApplication extends Application {
                 Room r = roomHandler.getRoom(roomId);
                 r.deleteFile(ctx.getParameter("fileIndex").toInt());
                 try {
-                    ctx.send(r.getIndex());
+                    String index = r.getIndex();
+                    ctx.send(index);
+                    broadcaster.publishUpdate(r.getId(), index);
                 } catch (JsonProcessingException e) {
                     ctx.status(500);
                     ctx.send(e.getMessage());
                 }
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        getLogger().info("Shutting down");
+        broadcaster.stop();
     }
 
     private void sendWithCSRF(RouteContext ctx, String response) {

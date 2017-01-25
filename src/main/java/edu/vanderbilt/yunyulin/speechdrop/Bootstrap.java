@@ -14,6 +14,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class Bootstrap {
+    public static String LOCALHOST = "127.0.0.1";
+    public static int HTTP_PORT = 6969;
+    public static int SIO_PORT = 6970;
+
     public static String VERSION;
     public static int TWO_MONTHS = 60 * 24 * 60 * 60;
 
@@ -22,15 +26,20 @@ public class Bootstrap {
 
         Class<?> bootstrapClass = Bootstrap.class;
         VERSION = IoUtils.toString(bootstrapClass.getResourceAsStream("/version"));
-        Pippo pippo = new Pippo(new SpeechDropApplication(
+        SpeechDropApplication app = new SpeechDropApplication(
                 IoUtils.toString(bootstrapClass.getResourceAsStream("/main.html")),
                 IoUtils.toString(bootstrapClass.getResourceAsStream("/room.html")),
                 IoUtils.toString(bootstrapClass.getResourceAsStream("/about.html")),
-                settings
-        )).setServer(new PersistentJettyServer());
-        pippo.getServer().getSettings().port(6969);
-        pippo.getServer().getSettings().host("127.0.0.1");
+                settings);
+        Pippo pippo = new Pippo(app).setServer(new PersistentJettyServer());
+        pippo.getServer().getSettings().port(HTTP_PORT);
+        pippo.getServer().getSettings().host(LOCALHOST);
         pippo.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            app.destroy();
+            pippo.stop();
+        }));
     }
 
     public static class PersistentJettyServer extends JettyServer {

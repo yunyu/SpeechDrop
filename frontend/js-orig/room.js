@@ -87,6 +87,16 @@ var dropCard = new Dropzone("div#file-dropzone", { url: "/" + roomId + "/upload"
     acceptedFiles: allowedMimes
 });
 
+var sock = io("https://sock.speechdrop.net/");
+sock.on("connect", function () {
+   // console.log("Connected");
+   sock.emit("join", roomId);
+   sock.on("update", function (data) {
+       uploadedFiles.fileList = processFileList(JSON.parse(data));
+   })
+});
+
+/*
 var refreshCards = function () {
     var r = new XMLHttpRequest();
     r.open("GET", "/" + roomId + "/index?_=" + Date.now(), true);
@@ -104,5 +114,6 @@ var refreshCards = function () {
 
 refreshCards();
 setInterval(refreshCards, 3000);
+*/
 
 resetDropzone(dropCard.element);

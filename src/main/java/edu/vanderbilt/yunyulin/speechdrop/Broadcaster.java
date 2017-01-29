@@ -2,15 +2,15 @@ package edu.vanderbilt.yunyulin.speechdrop;
 
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
-import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.getLogger;
 
 public class Broadcaster {
     private final SocketIOServer server;
     private final RoomHandler roomHandler;
+
+    private static final String joinEvent = "join";
+    private static final String updateEvent = "update";
+    private static final String leaveEvent = "leave";
 
     public Broadcaster(String hostname, int port, RoomHandler roomHandler) {
         this.roomHandler = roomHandler;
@@ -23,13 +23,14 @@ public class Broadcaster {
     }
 
     public void start() {
-        server.addEventListener("join", String.class,
+        server.addEventListener(joinEvent, String.class,
                 (client, roomName, ackRequest) -> {
                     if (roomHandler.roomExists(roomName)) {
                         client.joinRoom(roomName);
+                        client.sendEvent(updateEvent, roomHandler.getRoom(roomName).getIndex());
                     }
                 });
-        server.addEventListener("leave", String.class,
+        server.addEventListener(leaveEvent, String.class,
                 (client, roomName, ackRequest) -> client.leaveRoom(roomName));
         server.startAsync();
     }
@@ -39,6 +40,6 @@ public class Broadcaster {
     }
 
     public void publishUpdate(String room, String data) {
-        server.getRoomOperations(room).sendEvent("update", data);
+        server.getRoomOperations(room).sendEvent(updateEvent, data);
     }
 }

@@ -91,7 +91,7 @@
         <div id="code-input">
           <input id="code-input-box" v-model="code" placeholder="Type an existing room code" maxlength="6"
                  autocorrect="off" autocapitalize="none">
-          <div class="input-hint" v-html="produceHint(code)"></div>
+          <div class="input-hint" v-html="hint"></div>
         </div>
       </div>
       <div class="sep-text">OR</div>
@@ -105,6 +105,6 @@
       </div>
     </article>
   </div>
-  <script>var produceHint=function(a){var b=document.getElementById("code-input-box");if(a.length<maxChars){b.className="";var c=maxChars-a.length;return c+" character"+(c>1?"s":"")+" left"}var d=new XMLHttpRequest;return d.open("GET",window.location.href+a+"/index",!1),d.send(),200!=d.status?(b.className="input-invalid",'<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=a,"Taking you there...")},maxChars=6,codeInput=new Vue({el:"#code-input",data:{code:""}});</script>
+  <script>var maxChars=6,codeInputBox=document.getElementById("code-input-box"),charRemaining=function(a){var b=maxChars-a.length;return b+" character"+(1!=b?"s":"")+" left"},codeInput=new Vue({el:"#code-input",data:{code:"",hint:charRemaining("")},watch:{code:function(a){this.produceHint(a)}},methods:{produceHint:function(a){if(a.length<maxChars)codeInputBox.className="",this.hint=charRemaining(a);else{this.hint="Checking...";var b=new XMLHttpRequest;b.open("GET",window.location.href+a+"/index"),b.onloadend=function(){200!=b.status?(codeInputBox.className="input-invalid",codeInput.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=a,codeInput.hint="Taking you there...")},b.send()}}}});</script>
 </body>
 </html>

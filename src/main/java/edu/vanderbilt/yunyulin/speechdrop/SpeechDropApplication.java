@@ -152,7 +152,7 @@ public class SpeechDropApplication extends Application {
                 if (files.size() == 0) {
                     res.file(outFile, Util.getEmptyZipInputStream());
                 } else {
-                    OutputStream out = Util.getResponseOutputStream(res, outFile);
+                    OutputStream out = res.chunked(true).filenameHeader(outFile).getOutputStream();
                     try {
                         Util.zip(files, out);
                         res.getHttpServletResponse().flushBuffer();

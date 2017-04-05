@@ -1,7 +1,5 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import ro.pippo.core.Response;
-
 import java.io.*;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -79,11 +77,5 @@ public class Util {
 
     public static InputStream getEmptyZipInputStream() {
         return new ByteArrayInputStream(emptyZip);
-    }
-
-    public static OutputStream getResponseOutputStream(Response res, String fileName) {
-        res.chunked(true);
-        res.header("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-        return res.getOutputStream();
     }
 }

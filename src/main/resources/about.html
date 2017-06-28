@@ -38,11 +38,11 @@
     text-align:center;
   }
 
-  @supports ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+  @supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
     nav {
       background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
   }
   </style>
@@ -71,7 +71,7 @@
       <h4>Which browsers are supported?</h4>
       <p>Modern versions of Chrome, Safari, Firefox, Edge, Opera, and IE11 will work.</p>
       <h4>What's this powered by?</h4>
-      <p>This is hosted on a 32GB RAM, i7 4770k box from OVH. The backend uses nginx and pippo, and the frontend uses picnic.css and vue.js.</p>
+      <p>The backend uses nginx and pippo, and the frontend uses Picnic CSS and Vue.js.</p>
       <p>The source is available <a href="https://github.com/yunyul/SpeechDrop">on GitHub</a>.</p>
       <p>Currently running version {% VERSION %}.</p>
       </div>

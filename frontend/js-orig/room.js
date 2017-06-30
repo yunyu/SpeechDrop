@@ -51,7 +51,7 @@ function setUploadText(dropzoneElement, text) {
 }
 
 function resetDropzone(dropzoneElement) {
-    setUploadText(dropzoneElement, "Drag files here or click to upload.");
+    setUploadText(dropzoneElement, "Drag files here or click to upload");
     dropzoneElement.className = "dz-clickable";
 }
 

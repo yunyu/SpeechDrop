@@ -1,22 +1,23 @@
-Vue.filter('formatDate', function (timestamp) {
+var formatDate = function (timestamp) {
     var date = new Date(timestamp);
     var hours = date.getHours();
     var minutes = date.getMinutes();
     var ampm = hours >= 12 ? 'pm' : 'am';
     hours = hours % 12;
     hours = hours ? hours : 12;
-    minutes = minutes < 10 ? '0'+minutes : minutes;
-    var strTime = hours + ':' + minutes + ' ' + ampm;
-    return strTime;
-});
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    return hours + ':' + minutes + ' ' + ampm;
+};
 
 var processFileList = function (newList) {
     var processed = [];
     for (var i = 0; i < newList.length; i++) {
-        if (!newList[i]) continue;
-        newList[i].url = mediaUrl + roomId + '/' + i + '/' + newList[i].name;
-        newList[i].origPos = i;
-        processed.unshift(newList[i]);
+        var currEl = newList[i];
+        if (!currEl) continue;
+        currEl.url = mediaUrl + roomId + '/' + i + '/' + currEl.name;
+        currEl.origPos = i;
+        currEl.formattedDate = formatDate(currEl.ctime);
+        processed.unshift(currEl);
     }
     return processed;
 };
@@ -25,13 +26,13 @@ var deleteFile = function(fileIndex) {
     var r = new XMLHttpRequest();
     r.open("POST", "/{% ROOM %}/delete", true);
     for (var i = 0; i < uploadedFiles.fileList.length; i++) {
-        if (uploadedFiles.fileList[i].origPos == fileIndex) {
+        if (uploadedFiles.fileList[i].origPos === fileIndex) {
             uploadedFiles.fileList.splice(i, 1);
             break;
         }
     }
     r.onreadystatechange = function () {
-        if (r.readyState != 4 || r.status != 200) return;
+        if (r.readyState !== 4 || r.status !== 200) return;
         processFileList(JSON.parse(r.responseText));
     };
     var data = "fileIndex=" + fileIndex + "&_csrf_token=" + csrf;

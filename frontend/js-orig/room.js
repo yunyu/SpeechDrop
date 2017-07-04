@@ -86,7 +86,7 @@ var uploadedFiles = new Vue({
     methods: {
         deleteFile: function (fileIndex) {
             var r = new XMLHttpRequest();
-            r.open("POST", "/{% ROOM %}/delete", true);
+            r.open("POST", "/" + roomId + "/delete", true);
             for (var i = 0; i < uploadedFiles.fileList.length; i++) {
                 if (uploadedFiles.fileList[i].origPos === fileIndex) {
                     uploadedFiles.fileList.splice(i, 1);

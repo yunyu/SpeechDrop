@@ -3,7 +3,7 @@
 <head>
     <title>SpeechDrop</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Fast, efficient document sharing for debate rounds.">
+    <meta name="description" content="Fast, efficient, and secure document sharing for debate rounds.">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.4/vue.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.5/picnic.min.css"/>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
@@ -12,6 +12,10 @@
         body {
             background-color: whitesmoke;
             font-family: 'Open Sans', sans-serif;
+        }
+
+        [v-cloak] {
+            display: none;
         }
 
         h3 {
@@ -135,7 +139,7 @@
     </svg>
 </a>
 <div class="container">
-    <article class="card main-card">
+    <article id="app" class="card main-card" v-cloak>
         <header>
             <h3>SpeechDrop</h3>
         </header>
@@ -158,25 +162,6 @@
         </div>
     </article>
 </div>
-<script>var maxChars = 6, codeInputBox = document.getElementById("code-input-box"), charRemaining = function (a) {
-    var b = maxChars - a.length;
-    return b + " character" + (1 != b ? "s" : "") + " left"
-}, codeInput = new Vue({
-    el: "#code-input", data: {code: "", hint: charRemaining("")}, watch: {
-        code: function (a) {
-            this.produceHint(a)
-        }
-    }, methods: {
-        produceHint: function (a) {
-            if (a.length < maxChars) codeInputBox.className = "", this.hint = charRemaining(a); else {
-                this.hint = "Checking...";
-                var b = new XMLHttpRequest;
-                b.open("GET", window.location.href + a + "/index"), b.onloadend = function () {
-                    200 != b.status ? (codeInputBox.className = "input-invalid", codeInput.hint = '<span style="color:#b72a2a">Invalid room code</span>') : (window.location.href += a, codeInput.hint = "Taking you there...")
-                }, b.send()
-            }
-        }
-    }
-});</script>
+<script>var maxChars=6,codeInputBox=document.getElementById("code-input-box"),charRemaining=function(n){var e=maxChars-n.length;return e+" character"+(1!==e?"s":"")+" left"},codeInput=new Vue({el:"#app",data:{code:"",hint:charRemaining("")},watch:{code:function(n){this.produceHint(n)}},methods:{produceHint:function(n){if(n.length<maxChars)codeInputBox.className="",this.hint=charRemaining(n);else{this.hint="Checking...";var e=new XMLHttpRequest;e.open("GET",window.location.href+n+"/index"),e.onloadend=function(){200!==e.status?(codeInputBox.className="input-invalid",codeInput.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=n,codeInput.hint="Taking you there...")},e.send()}}}});</script>
 </body>
 </html>

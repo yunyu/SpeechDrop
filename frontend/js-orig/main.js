@@ -2,10 +2,10 @@ var maxChars = 6;
 var codeInputBox = document.getElementById("code-input-box");
 var charRemaining = function (val) {
     var remaining = maxChars - val.length;
-    return remaining + " character" + (remaining != 1 ? "s" : "") + " left";
+    return remaining + " character" + (remaining !== 1 ? "s" : "") + " left";
 };
 var codeInput = new Vue({
-    el: '#code-input',
+    el: '#app',
     data: {
         code: '',
         hint: charRemaining('')
@@ -25,7 +25,7 @@ var codeInput = new Vue({
                 var http = new XMLHttpRequest();
                 http.open('GET', window.location.href + val + "/index");
                 http.onloadend = function () {
-                    if (http.status != 200) {
+                    if (http.status !== 200) {
                         codeInputBox.className = "input-invalid";
                         codeInput.hint = '<span style="color:#b72a2a">Invalid room code</span>';
                     } else {

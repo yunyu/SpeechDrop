@@ -1,4 +1,4 @@
-var formatDate = function (timestamp) {
+function formatDate(timestamp) {
     var date = new Date(timestamp);
     var hours = date.getHours();
     var minutes = date.getMinutes();
@@ -7,9 +7,9 @@ var formatDate = function (timestamp) {
     hours = hours ? hours : 12;
     minutes = minutes < 10 ? '0' + minutes : minutes;
     return hours + ':' + minutes + ' ' + ampm;
-};
+}
 
-var processFileList = function (newList) {
+function processFileList(newList) {
     var processed = [];
     for (var i = 0; i < newList.length; i++) {
         var currEl = newList[i];
@@ -20,9 +20,9 @@ var processFileList = function (newList) {
         processed.unshift(currEl);
     }
     return processed;
-};
+}
 
-var deleteFile = function(fileIndex) {
+function deleteFile(fileIndex) {
     var r = new XMLHttpRequest();
     r.open("POST", "/{% ROOM %}/delete", true);
     for (var i = 0; i < uploadedFiles.fileList.length; i++) {
@@ -38,12 +38,46 @@ var deleteFile = function(fileIndex) {
     var data = "fileIndex=" + fileIndex + "&_csrf_token=" + csrf;
     r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     r.send(data);
-};
+}
 
 var uploadedFiles = new Vue({
     el: '#room-container',
     data: {
         fileList: processFileList(initialFiles)
+    },
+    mounted: function () {
+        var dropCard = new Dropzone("div#file-dropzone", { url: "/" + roomId + "/upload",
+            addedfile: function (file) {},
+            uploadprogress: function (file, progress, bytes) {
+                setUploadText(dropCard.element, "Uploading (" + Math.floor(progress) + "%)");
+            },
+            success: function (file, successMsg) {
+                resetDropzone(dropCard.element);
+                setUploadText(dropCard.element, "Upload successful!");
+                dropCard.element.className += " dropzone-success";
+                uploadedFiles.fileList = processFileList(JSON.parse(successMsg));
+                setTimeout(function () {
+                    resetDropzone(dropCard.element);
+                }, 2000);
+            },
+            error: function (file, errorMsg) {
+                resetDropzone(dropCard.element);
+                setUploadText(dropCard.element, "Upload failed, please retry.");
+                dropCard.element.className += " dropzone-fail";
+                console.log(errorMsg);
+                setTimeout(function () {
+                    resetDropzone(dropCard.element);
+                }, 2000);
+            },
+            sending: function (file, xhr, formData) {
+                formData.append("_csrf_token", csrf);
+            },
+            createImageThumbnails: false,
+            maxFilesize: 5,
+            uploadMultiple: false,
+            acceptedFiles: allowedMimes
+        });
+        resetDropzone(dropCard.element);
     }
 });
 
@@ -55,38 +89,6 @@ function resetDropzone(dropzoneElement) {
     setUploadText(dropzoneElement, "Drag files here or click to upload");
     dropzoneElement.className = "dz-clickable";
 }
-
-var dropCard = new Dropzone("div#file-dropzone", { url: "/" + roomId + "/upload",
-    addedfile: function (file) {},
-    uploadprogress: function (file, progress, bytes) {
-        setUploadText(dropCard.element, "Uploading (" + Math.floor(progress) + "%)");
-    },
-    success: function (file, successMsg) {
-        resetDropzone(dropCard.element);
-        setUploadText(dropCard.element, "Upload successful!");
-        dropCard.element.className += " dropzone-success";
-        uploadedFiles.fileList = processFileList(JSON.parse(successMsg));
-        setTimeout(function () {
-            resetDropzone(dropCard.element);
-        }, 2000);
-    },
-    error: function (file, errorMsg) {
-        resetDropzone(dropCard.element);
-        setUploadText(dropCard.element, "Upload failed, please retry.");
-        dropCard.element.className += " dropzone-fail";
-        console.log(errorMsg);
-        setTimeout(function () {
-            resetDropzone(dropCard.element);
-        }, 2000);
-    },
-    sending: function (file, xhr, formData) {
-        formData.append("_csrf_token", csrf);
-    },
-    createImageThumbnails: false,
-    maxFilesize: 5,
-    uploadMultiple: false,
-    acceptedFiles: allowedMimes
-});
 
 var sock = io("https://sock.speechdrop.net/");
 sock.on("connect", function () {
@@ -116,5 +118,3 @@ var refreshCards = function () {
 refreshCards();
 setInterval(refreshCards, 3000);
 */
-
-resetDropzone(dropCard.element);

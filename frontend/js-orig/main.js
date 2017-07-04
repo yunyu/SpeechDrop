@@ -1,5 +1,4 @@
 var maxChars = 6;
-var codeInputBox = document.getElementById("code-input-box");
 var charRemaining = function (val) {
     var remaining = maxChars - val.length;
     return remaining + " character" + (remaining !== 1 ? "s" : "") + " left";
@@ -8,7 +7,8 @@ var codeInput = new Vue({
     el: '#app',
     data: {
         code: '',
-        hint: charRemaining('')
+        hint: charRemaining(''),
+        codeInputClass: null
     },
     watch: {
         code: function (val) {
@@ -18,7 +18,7 @@ var codeInput = new Vue({
     methods: {
         produceHint: function (val) {
             if (val.length < maxChars) {
-                codeInputBox.className = "";
+                this.codeInputClass = null;
                 this.hint = charRemaining(val);
             } else {
                 this.hint = "Checking...";
@@ -26,7 +26,7 @@ var codeInput = new Vue({
                 http.open('GET', window.location.href + val + "/index");
                 http.onloadend = function () {
                     if (http.status !== 200) {
-                        codeInputBox.className = "input-invalid";
+                        codeInput.codeInputClass = "input-invalid";
                         codeInput.hint = '<span style="color:#b72a2a">Invalid room code</span>';
                     } else {
                         window.location.href += val;

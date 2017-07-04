@@ -144,8 +144,8 @@
             <h3>SpeechDrop</h3>
         </header>
         <div class="room-controls code-control">
-            <div id="code-input">
-                <input id="code-input-box" type="text" v-model="code" placeholder="Type an existing room code"
+            <div>
+                <input type="text" v-model="code" v-bind:class="codeInputClass" placeholder="Type an existing room code"
                        maxlength="6"
                        autocorrect="off" autocapitalize="none">
                 <div class="input-hint" v-html="hint"></div>
@@ -162,6 +162,6 @@
         </div>
     </article>
 </div>
-<script>var maxChars=6,codeInputBox=document.getElementById("code-input-box"),charRemaining=function(n){var e=maxChars-n.length;return e+" character"+(1!==e?"s":"")+" left"},codeInput=new Vue({el:"#app",data:{code:"",hint:charRemaining("")},watch:{code:function(n){this.produceHint(n)}},methods:{produceHint:function(n){if(n.length<maxChars)codeInputBox.className="",this.hint=charRemaining(n);else{this.hint="Checking...";var e=new XMLHttpRequest;e.open("GET",window.location.href+n+"/index"),e.onloadend=function(){200!==e.status?(codeInputBox.className="input-invalid",codeInput.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=n,codeInput.hint="Taking you there...")},e.send()}}}});</script>
+<script>var maxChars=6,charRemaining=function(n){var e=maxChars-n.length;return e+" character"+(1!==e?"s":"")+" left"},codeInput=new Vue({el:"#app",data:{code:"",hint:charRemaining(""),codeInputClass:null},watch:{code:function(n){this.produceHint(n)}},methods:{produceHint:function(n){if(n.length<maxChars)this.codeInputClass=null,this.hint=charRemaining(n);else{this.hint="Checking...";var e=new XMLHttpRequest;e.open("GET",window.location.href+n+"/index"),e.onloadend=function(){200!==e.status?(codeInput.codeInputClass="input-invalid",codeInput.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=n,codeInput.hint="Taking you there...")},e.send()}}}});</script>
 </body>
 </html>

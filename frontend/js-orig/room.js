@@ -28,6 +28,8 @@ var uploadedFiles = new Vue({
         fileList: processFileList(initialFiles)
     },
     mounted: function () {
+        ga('send', 'event', 'Room', 'join', roomId);
+
         function setUploadText(dropzoneElement, text) {
             dropzoneElement.getElementsByTagName("p")[0].innerHTML = text;
         }
@@ -74,6 +76,7 @@ var uploadedFiles = new Vue({
                 },
                 sending: function (file, xhr, formData) {
                     formData.append("_csrf_token", csrf);
+                    ga('send', 'event', 'Room', 'upload', roomId);
                 },
                 createImageThumbnails: false,
                 maxFilesize: 5,
@@ -100,6 +103,7 @@ var uploadedFiles = new Vue({
             var data = "fileIndex=" + fileIndex + "&_csrf_token=" + csrf;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.send(data);
+            ga('send', 'event', 'Room', 'delete', roomId);
         }
     }
 });

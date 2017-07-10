@@ -284,7 +284,8 @@
 <div class="container" id="room-container" v-cloak>
     <transition name="fade">
         <a v-if="fileList.length > 0" onclick="ga('send', 'event', 'Room', 'archive')"
-           href="/{% ROOM %}/archive" data-tooltip="Download all files" class="button download-all-button tooltip-left">
+            href="/{% ROOM %}/archive" data-tooltip="Download all files" class="button download-all-button tooltip-left"
+            download>
             <img src="https://media.speechdrop.net/img/download-folder.svg" class="header-button-img"
                  alt="Download icon"/>
         </a>

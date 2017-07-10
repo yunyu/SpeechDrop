@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.getLogger;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 
 public class PurgeTask {
     public static final ScheduledExecutorService ses =
@@ -33,7 +33,7 @@ public class PurgeTask {
                 }
             });
             toRemove.forEach(roomHandler::deleteRoom);
-            getLogger().info("Purged " + toRemove.size() + " rooms");
+            logger().info("Purged " + toRemove.size() + " rooms");
         }, 0, 3, TimeUnit.HOURS);
     }
 }

@@ -2,8 +2,8 @@ package edu.vanderbilt.yunyulin.speechdrop.room;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.UploadHandler;
+import io.vertx.ext.web.RoutingContext;
 import lombok.Getter;
-import ro.pippo.core.route.RouteContext;
 
 import java.io.File;
 import java.util.Collection;
@@ -21,7 +21,7 @@ public class Room {
         this.uploadHandler = new UploadHandler(id);
     }
 
-    public String handleUpload(RouteContext ctx) throws Exception {
+    public String handleUpload(RoutingContext ctx) throws Exception {
         return uploadHandler.handleUpload(ctx);
     }
 

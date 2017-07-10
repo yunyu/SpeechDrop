@@ -6,13 +6,13 @@ import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-import io.vertx.core.AbstractVerticle;
+import io.vertx.core.*;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -28,10 +28,15 @@ public class SpeechDropApplication extends AbstractVerticle {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     private static Logger logger;
+    private static Vertx vertxInstance;
 
     // Lombok getter won't work with import static
-    public static Logger getLogger() {
+    public static Logger logger() {
         return logger;
+    }
+
+    public static Vertx vertx() {
+        return vertxInstance;
     }
 
     // private static final List<String> allowedExtensions = Arrays.asList("doc", "docx", "odt", "pdf", "txt", "rtf");
@@ -57,6 +62,8 @@ public class SpeechDropApplication extends AbstractVerticle {
     String aboutPage;
 
     public SpeechDropApplication(String mainPage, String roomTemplate, String aboutPage) {
+        vertxInstance = getVertx();
+
         // Initialize logging
         logger = Logger.getLogger("SpeechDrop");
         logger.setUseParentHandlers(false);
@@ -75,7 +82,7 @@ public class SpeechDropApplication extends AbstractVerticle {
 
     @Override
     public void start() {
-        getLogger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
+        logger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
         BASE_PATH.mkdir();
         purgeTask.start();
 
@@ -84,7 +91,8 @@ public class SpeechDropApplication extends AbstractVerticle {
 
         Router router = Router.router(vertx);
 
-        router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize));
+        router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
+
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
@@ -95,7 +103,7 @@ public class SpeechDropApplication extends AbstractVerticle {
 
         router.route("/makeroom").method(POST).handler(ctx -> {
             String roomName = ctx.request().params().get("name");
-            // getLogger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
+            // logger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
             if (roomName != null) roomName = roomName.trim();
             if (roomName == null || roomName.length() == 0 || roomName.length() > 60) {
                 ctx.reroute("/");
@@ -122,42 +130,52 @@ public class SpeechDropApplication extends AbstractVerticle {
             }
         });
 
-        GET("/{roomid}/archive", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
+        router.route("/:roomid/archive").method(GET).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                ctx.status(404);
+                ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 Collection<File> files = r.getFiles();
                 String outFile = r.getData().name.trim() + ".zip";
-                Response res = ctx.getResponse();
+
+                Handler<Buffer> writeBufferToResponse = buf -> ctx.response()
+                        .setChunked(true)
+                        .putHeader("Content-Disposition", "attachment; filename=\"" + outFile + "\"")
+                        .putHeader(CONTENT_TYPE, "application/octet-stream")
+                        .end(buf);
+
                 if (files.size() == 0) {
-                    res.file(outFile, Util.getEmptyZipInputStream());
+                    writeBufferToResponse.handle(Util.getEmptyZipBuffer());
                 } else {
-                    OutputStream out = res.chunked(true).filenameHeader(outFile).getOutputStream();
-                    try {
-                        Util.zip(files, out);
-                        res.getHttpServletResponse().flushBuffer();
-                    } catch (IOException e) {
-                        throw new PippoRuntimeException(e);
-                    }
+                    vertx.<Buffer>executeBlocking(fut -> {
+                        try {
+                            fut.complete(Util.zip(files));
+                        } catch (IOException e) {
+                            fut.fail(e);
+                        }
+                    }, false, res -> {
+                        if (res.succeeded()) {
+                            writeBufferToResponse.handle(res.result());
+                        } else {
+                            ctx.response().setStatusCode(500).end();
+                        }
+                    });
                 }
             }
         });
 
-        ALL("/{roomid}/upload", csrfHandler);
-        POST("/{roomid}/upload", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
-            // getLogger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
+        router.route("/:roomid/upload").method(POST).produces(APPLICATION_JSON).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
+            // logger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
             if (!roomHandler.roomExists(roomId)) {
-                getLogger().warning("(Upload) Nonexist " + roomId);
-                ctx.status(500);
-                ctx.send(EMPTY_INDEX);
+                logger().warning("(Upload) Nonexist " + roomId);
+                ctx.response().setStatusCode(500).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 try {
                     String index = r.handleUpload(ctx);
-                    ctx.send(index);
+                    ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
                     broadcaster.publishUpdate(r.getId(), index);
                 } catch (Exception e) {
                     ctx.status(500);
@@ -170,7 +188,7 @@ public class SpeechDropApplication extends AbstractVerticle {
         POST("/{roomid}/delete", ctx -> {
             String roomId = ctx.getParameter("roomid").toString();
             if (!roomHandler.roomExists(roomId)) {
-                getLogger().warning("(Upload) Nonexist " + roomId);
+                logger().warning("(Upload) Nonexist " + roomId);
                 ctx.status(500);
                 ctx.send(EMPTY_INDEX);
             } else {
@@ -206,12 +224,11 @@ public class SpeechDropApplication extends AbstractVerticle {
                 }
             }
         });
-
     }
 
     @Override
     protected void onDestroy() {
-        getLogger().info("Shutting down");
+        logger().info("Shutting down");
         broadcaster.stop();
     }
 }

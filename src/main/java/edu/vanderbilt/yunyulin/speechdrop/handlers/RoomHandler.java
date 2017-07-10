@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.getLogger;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 
 public class RoomHandler {
     private static final char[] allowedChars =
@@ -69,7 +69,7 @@ public class RoomHandler {
             newId = nextSessionId();
         }
         dataStore.put(newId, new RoomData(name, System.currentTimeMillis()));
-        getLogger().info("[" + newId + "] Created room with name " + name);
+        logger().info("[" + newId + "] Created room with name " + name);
         dispatchSave();
         return getRoom(newId);
     }

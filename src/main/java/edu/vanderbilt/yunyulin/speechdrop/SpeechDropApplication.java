@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -100,6 +101,8 @@ public class SpeechDropApplication {
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
+
+        router.route("/static/*").handler(StaticHandler.create("static"));
 
         router.route("/about").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(aboutPage)

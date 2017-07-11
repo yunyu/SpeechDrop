@@ -26,7 +26,7 @@ import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.SIO_PORT;
 import static io.vertx.core.http.HttpMethod.*;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
-public class SpeechDropApplication extends AbstractVerticle {
+public class SpeechDropApplication {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     private static Logger logger;
@@ -52,6 +52,7 @@ public class SpeechDropApplication extends AbstractVerticle {
     private static final String TEXT_HTML = "text/html";
     private static final String APPLICATION_JSON = "application/json";
 
+    private final Vertx vertx;
     private final RoomHandler roomHandler;
     private final Broadcaster broadcaster;
 
@@ -59,7 +60,9 @@ public class SpeechDropApplication extends AbstractVerticle {
     private final String roomTemplate;
     private final String aboutPage;
 
-    public SpeechDropApplication(String mainPage, String roomTemplate, String aboutPage) {
+    public SpeechDropApplication(Vertx vertx, String mainPage, String roomTemplate, String aboutPage) {
+        this.vertx = vertx;
+
         // Initialize logging
         logger = Logger.getLogger("SpeechDrop");
         logger.setUseParentHandlers(false);
@@ -84,13 +87,10 @@ public class SpeechDropApplication extends AbstractVerticle {
         ctx.response().setStatusCode(errCode).putHeader(CONTENT_TYPE, APPLICATION_JSON).end(EMPTY_INDEX);
     }
 
-    @Override
-    public void start() {
+    public void mount(Router router) {
         logger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
         BASE_PATH.mkdir();
         new PurgeTask(roomHandler, vertx).schedule();
-
-        Router router = Router.router(vertx);
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
 
@@ -219,11 +219,5 @@ public class SpeechDropApplication extends AbstractVerticle {
                 });
             }
         });
-    }
-
-    @Override
-    public void stop() {
-        logger().info("Shutting down");
-        broadcaster.stop();
     }
 }

@@ -36,7 +36,7 @@ public class IndexHandler {
     public void load(Handler<IndexHandler> onComplete) {
         if (!indexFile.exists()) {
             loaded = true;
-            entries = new ArrayList<>();
+            entries = new ArrayList<>(3);
             onComplete.handle(this);
         } else {
             vertx.fileSystem().readFile(indexFile.getPath(), res -> {

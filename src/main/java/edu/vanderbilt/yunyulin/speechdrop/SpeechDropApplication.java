@@ -214,7 +214,13 @@ public class SpeechDropApplication {
             }
         });
 
-        String mediaUrl = config.getString("mediaUrl");
+        String mediaUrl;
+        if (config.getBoolean("debugMediaDownloads")) {
+            mediaUrl = "/media/";
+            router.route("/media/*").handler(StaticHandler.create("public"));
+        } else {
+            mediaUrl = config.getString("mediaUrl");
+        }
         router.route("/:roomid").method(GET).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {

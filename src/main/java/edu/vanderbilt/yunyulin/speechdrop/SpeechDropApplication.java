@@ -1,7 +1,5 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Joiner;
 import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
@@ -77,7 +75,7 @@ public class SpeechDropApplication {
 
         // Initialize templates
         this.mainPage = mainPage;
-        this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", Joiner.on(",").join(allowedMimeTypes));
+        this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes));
         this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
 
         // Initialize broadcaster

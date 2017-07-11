@@ -58,15 +58,17 @@ public class IndexHandler {
         logger().info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
-        File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
-        vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
-            File dest = new File(destDir, uploadedFile.fileName());
-            vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
-                    res -> {
-                        entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
-                        indexHandler.handle(writeIndex());
-                    }
-            );
+        vertx.fileSystem().mkdir(uploadDirectory.getPath(), uploadDirRes -> {
+            File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
+            vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
+                File dest = new File(destDir, uploadedFile.fileName());
+                vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
+                        res -> {
+                            entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
+                            indexHandler.handle(writeIndex());
+                        }
+                );
+            });
         });
     }
 

@@ -25,15 +25,12 @@ public class Room {
         this.id = id;
         this.data = data;
 
-        File uploadDirectory = new File(SpeechDropApplication.BASE_PATH, id);
-        vertx.fileSystem().mkdir(uploadDirectory.getPath(), res ->
-                new IndexHandler(vertx, uploadDirectory).load(loadedIndex -> {
-                    this.indexHandler = loadedIndex;
-                    while (!queuedOperations.isEmpty()) {
-                        queuedOperations.pop().handle(loadedIndex);
-                    }
-                })
-        );
+        new IndexHandler(vertx, new File(SpeechDropApplication.BASE_PATH, id)).load(loadedIndex -> {
+            this.indexHandler = loadedIndex;
+            while (!queuedOperations.isEmpty()) {
+                queuedOperations.pop().handle(loadedIndex);
+            }
+        });
     }
 
     private void scheduleOperation(Handler<IndexHandler> operation) {

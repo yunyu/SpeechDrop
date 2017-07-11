@@ -94,11 +94,11 @@ public class SpeechDropApplication {
     public void mount(Router router) throws IOException {
         logger().info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
         Files.createDirectories(BASE_PATH.toPath());
-        new PurgeTask(roomHandler, vertx).schedule();
+        new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
         router.route().handler(CookieHandler.create());
-        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)));
         router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->

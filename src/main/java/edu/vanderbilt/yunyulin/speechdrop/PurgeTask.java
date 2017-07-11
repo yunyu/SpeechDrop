@@ -14,13 +14,14 @@ import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 public class PurgeTask {
     private final RoomHandler roomHandler;
     private final Vertx vertx;
+    private final int purgeIntervalInSeconds;
 
     public void schedule() {
         Handler<Long> runPurge = id -> {
             List<String> toRemove = new ArrayList<>();
             roomHandler.getDataStore().forEach((k, v) -> {
                 // 10 min deletion
-                if (System.currentTimeMillis() - v.ctime > SpeechDropVerticle.PURGE_INTERVAL * 1000) { // Unix time, so no zoned stuff
+                if (System.currentTimeMillis() - v.ctime > purgeIntervalInSeconds * 1000) { // Unix time, so no zoned stuff
                     toRemove.add(k);
                 }
             });

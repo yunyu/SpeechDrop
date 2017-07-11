@@ -41,7 +41,7 @@ var uploadedFiles = new Vue({
             };
             eb.onclose = function () {
                 eb = undefined;
-                setTimeout(sockConnect, 1000);
+                setTimeout(sockConnect, 3000);
             }
         }
 

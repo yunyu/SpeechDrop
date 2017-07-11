@@ -1,99 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>About | SpeechDrop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    <title>About | SpeechDrop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-      ga('create', 'UA-102278933-1', 'auto');
-      ga('send', 'pageview');
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.5/picnic.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600">
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <style>
-  body {
-    background-color: whitesmoke;
-    font-family: 'Open Sans', sans-serif;
-  }
+        ga('create', 'UA-102278933-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picnic/6.2.5/picnic.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <style>
+        body {
+            background-color: whitesmoke;
+            font-family: 'Open Sans', sans-serif;
+            overflow-x: hidden;
+        }
 
-  nav .brand, h3 {
-    font-weight: 600;
-  }
+        nav .brand, h3 {
+            font-weight: 600;
+        }
 
-  .container {
-    padding: 100px 20px 20px;
-    height: 100%;
-    overflow-x: hidden;
-  }
+        .container {
+            padding: 100px 20px 20px;
+            height: 100%;
+        }
 
-  .card {
-    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
-    border: none;
-    margin-bottom: 2px;
-  }
+        .card {
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+            border: none;
+            margin-bottom: 2px;
+        }
 
-  .main-card {
-    left: 50%;
-    transform: translate(-50%);
-    max-width: 640px;
-    margin-bottom: 40px;
-  }
+        .main-card {
+            left: 50%;
+            transform: translate(-50%);
+            max-width: 640px;
+            margin-bottom: 40px;
+        }
 
-  .card > footer {
-    border-top:1px solid #eee;
-    font-size:14px;
-    color: #777;
-    text-align:center;
-  }
+        .card > footer {
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #777;
+            text-align: center;
+        }
 
-  @supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
-    nav {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-  }
-  </style>
+        @supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+            nav {
+                background: rgba(255, 255, 255, 0.7);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-  <nav>
-  <a href="/" class="brand">
-    <span>SpeechDrop</span>
-  </a>
-  <div class="menu">
-    <a href="/about" class="pseudo button">About</a>
-  </div>
+<nav>
+    <a href="/" class="brand">
+        <span>SpeechDrop</span>
+    </a>
+    <div class="menu">
+        <a href="/about" class="pseudo button">About</a>
+    </div>
 </nav>
+<div class="container">
     <article class="card main-card">
-      <header>
-        <h3>About SpeechDrop</h3>
-      </header>
-      <div style="padding:20px;margin-bottom:10px">
-      <h4>What file formats are allowed?</h4>
-      <p>You can upload DOC, DOCX, ODT, RTF, PDF, and TXT files that are up to 5MB.</p>
-      <h4>Why should I use this over {insert competing service}?</h4>
-      <p>SpeechDrop supports drag-and-drop, has auto-refreshing, preserves filenames, allows you to archive rooms with one click, lacks ambiguous characters in room codes, looks better (especially on mobile devices), uses HTTPS, and most importantly, it has a cooler name and fancy animations.</p>
-      <h4>How long are files kept for?</h4>
-      <p>Files are kept for up to 60 days after room creation. When you manually delete a file, it is permanently purged from the server and cannot be recovered.</p>
-      <h4>What information is collected?</h4>
-      <p>We collect anonymous, non-identifying usage data for the purpose of improving the service. Cookies are used in order to analyze user activity with Google Analytics and Cloudflare. We do not share your individual data with any other parties.</p>
-      <h4>Which browsers are supported?</h4>
-      <p>Modern versions of Chrome, Safari, Firefox, Edge, Opera, and IE11 will work.</p>
-      <h4>What's this powered by?</h4>
-      <p>The backend uses NGINX and Vert.x, and the frontend uses Picnic CSS and Vue.js.</p>
-      <p>The source is available <a href="https://github.com/yunyul/SpeechDrop">on GitHub</a>.</p>
-      <p>Currently running version {% VERSION %}.</p>
-      </div>
-      <footer>
-        Contact: yunyu.lin@vanderbilt.edu
-      </footer>
+        <header>
+            <h3>About SpeechDrop</h3>
+        </header>
+        <div style="padding:20px;margin-bottom:10px">
+            <h4>What file formats are allowed?</h4>
+            <p>You can upload DOC, DOCX, ODT, RTF, PDF, and TXT files that are up to 5MB.</p>
+            <h4>Why should I use this over {insert competing service}?</h4>
+            <p>SpeechDrop supports drag-and-drop, has auto-refreshing, preserves filenames, allows you to archive rooms
+                with one click, lacks ambiguous characters in room codes, looks better (especially on mobile devices),
+                uses HTTPS, and most importantly, it has a cooler name and fancy animations.</p>
+            <h4>How long are files kept for?</h4>
+            <p>Files are kept for up to 60 days after room creation. When you manually delete a file, it is permanently
+                purged from the server and cannot be recovered.</p>
+            <h4>What information is collected?</h4>
+            <p>We collect anonymous, non-identifying usage data for the purpose of improving the service. Cookies are
+                used in order to analyze user activity with Google Analytics and Cloudflare. We do not share your
+                individual data with any other parties.</p>
+            <h4>Which browsers are supported?</h4>
+            <p>Modern versions of Chrome, Safari, Firefox, Edge, Opera, and IE11 will work.</p>
+            <h4>What's this powered by?</h4>
+            <p>The backend uses NGINX and Vert.x, and the frontend uses Picnic CSS and Vue.js.</p>
+            <p>The source is available <a href="https://github.com/yunyul/SpeechDrop">on GitHub</a>.</p>
+            <p>Currently running version {% VERSION %}.</p>
+        </div>
+        <footer>
+            Contact: yunyu.lin@vanderbilt.edu
+        </footer>
     </article>
-  </div>
+</div>
 </body>
 </html>

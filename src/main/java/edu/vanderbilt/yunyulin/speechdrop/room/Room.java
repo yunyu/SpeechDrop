@@ -18,7 +18,7 @@ public class Room {
     @Getter
     private final RoomData data;
 
-    private final Deque<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>();
+    private final Deque<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>(2);
     private IndexHandler indexHandler;
 
     public Room(Vertx vertx, String id, RoomData data) {

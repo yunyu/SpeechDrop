@@ -67,7 +67,7 @@
 
     .file-header {
         height: 149px;
-        background: url("https://media.speechdrop.net/img/doc-bg.svg") no-repeat right bottom;
+        background: url("/static/img/doc-bg.svg") no-repeat right bottom;
         background-size: 100px 95px;
     }
 
@@ -286,7 +286,7 @@
         <a v-if="fileList.length > 0" onclick="ga('send', 'event', 'Room', 'archive')"
             href="/{% ROOM %}/archive" data-tooltip="Download all files" class="button download-all-button tooltip-left"
             download>
-            <img src="https://media.speechdrop.net/img/download-folder.svg" class="header-button-img"
+            <img src="/static/img/download-folder.svg" class="header-button-img"
                  alt="Download icon"/>
         </a>
     </transition>
@@ -299,7 +299,7 @@
         <div class="card-wrapper upload-wrapper" v-bind:key="-1">
             <article class="card upload-card">
                 <div id="file-dropzone">
-                    <img class="passthrough-pointer" src="https://media.speechdrop.net/img/upload-icon.svg" width="80" height="80" alt="Upload icon"/>
+                    <img class="passthrough-pointer" src="/static/img/upload-icon.svg" width="80" height="80" alt="Upload icon"/>
                     <p id="upload-text" class="passthrough-pointer"></p>
                 </div>
             </article>

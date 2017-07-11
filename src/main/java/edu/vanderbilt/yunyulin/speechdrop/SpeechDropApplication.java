@@ -149,7 +149,11 @@ public class SpeechDropApplication {
 
                     Handler<Buffer> writeBufferToResponse = buf -> ctx.response()
                             .setChunked(true)
-                            .putHeader("Content-Disposition", "attachment; filename=\"" + outFile + "\"")
+                            // See https://stackoverflow.com/a/38324508
+                            .putHeader("Content-Disposition", "attachment; filename=\"" + outFile
+                                    .replace("\\", "\\\\")
+                                    .replace("\"", "\\\"") + "\""
+                            )
                             .putHeader(CONTENT_TYPE, "application/octet-stream")
                             .end(buf);
 

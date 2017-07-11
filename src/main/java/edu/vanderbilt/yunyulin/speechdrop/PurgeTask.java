@@ -1,6 +1,7 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
 
@@ -15,7 +16,7 @@ public class PurgeTask {
     private final Vertx vertx;
 
     public void schedule() {
-        vertx.setPeriodic(3 * 60 * 60 * 1000, id -> {
+        Handler<Long> runPurge = id -> {
             List<String> toRemove = new ArrayList<>();
             roomHandler.getDataStore().forEach((k, v) -> {
                 // 10 min deletion
@@ -25,6 +26,8 @@ public class PurgeTask {
             });
             toRemove.forEach(roomHandler::deleteRoom);
             logger().info("Purged " + toRemove.size() + " rooms");
-        });
+        };
+        vertx.setPeriodic(3 * 60 * 60 * 1000, runPurge);
+        runPurge.handle(0L);
     }
 }

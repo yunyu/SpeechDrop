@@ -4,7 +4,8 @@ import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-import io.vertx.core.*;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -21,11 +22,10 @@ import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle.LOCALHOST;
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle.SIO_PORT;
-import static io.vertx.core.http.HttpHeaders.LOCATION;
-import static io.vertx.core.http.HttpMethod.*;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static io.vertx.core.http.HttpHeaders.LOCATION;
+import static io.vertx.core.http.HttpMethod.GET;
+import static io.vertx.core.http.HttpMethod.POST;
 
 public class SpeechDropApplication {
     private static final String EMPTY_INDEX = "[]";
@@ -73,15 +73,12 @@ public class SpeechDropApplication {
 
         // Initialize rooms
         roomHandler = new RoomHandler(vertx);
-        broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
+        broadcaster = new Broadcaster(vertx, roomHandler);
 
         // Initialize templates
         this.mainPage = mainPage;
         this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes));
         this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
-
-        // Initialize broadcaster
-        broadcaster.start();
     }
 
     private void sendEmptyIndex(RoutingContext ctx, int errCode) {
@@ -102,6 +99,8 @@ public class SpeechDropApplication {
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
+
+        broadcaster.mount(router);
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 

@@ -1,45 +1,59 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import com.corundumstudio.socketio.Configuration;
-import com.corundumstudio.socketio.SocketIOServer;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.sockjs.*;
 
 public class Broadcaster {
-    private final SocketIOServer server;
-    private final RoomHandler roomHandler;
+    private final Vertx vertx;
+    private final SockJSHandler sockJSHandler;
 
-    private static final String joinEvent = "join";
-    private static final String updateEvent = "update";
-    private static final String leaveEvent = "leave";
+    private static final String ADDR_PREFIX = "speechdrop.room.";
 
-    public Broadcaster(String hostname, int port, RoomHandler roomHandler) {
-        this.roomHandler = roomHandler;
-        Configuration config = new Configuration();
-        config.setHostname(hostname);
-        config.setPort(port);
-        config.getSocketConfig().setReuseAddress(true);
-
-        server = new SocketIOServer(config);
+    public Broadcaster(Vertx vertx, RoomHandler roomHandler) {
+        this.vertx = vertx;
+        this.sockJSHandler = SockJSHandler.create(vertx);
+        sockJSHandler.bridge(new BridgeOptions().addOutboundPermitted(
+                new PermittedOptions().setAddressRegex("speechdrop\\.room\\..+")
+        ), be -> {
+            if (be.type() == BridgeEventType.REGISTER) {
+                String address = be.getRawMessage().getString("address");
+                String roomId = getRoomId(address);
+                if (roomId != null && roomHandler.roomExists(roomId)) {
+                    roomHandler.getRoom(roomId).getIndex().setHandler(ar -> {
+                        // Copies envelope structure from EventBusBridgeImpl##deliverMessage
+                        be.socket().write(Buffer.buffer(new JsonObject()
+                                .put("type", "rec")
+                                .put("address", address)
+                                .put("body", ar.result())
+                                .encode()
+                        ));
+                    });
+                } else {
+                    be.complete(false);
+                    return;
+                }
+            }
+            be.complete(true);
+        });
     }
 
-    public void start() {
-        server.addEventListener(joinEvent, String.class,
-                (client, roomName, ackRequest) -> {
-                    if (roomHandler.roomExists(roomName)) {
-                        client.joinRoom(roomName);
-                        client.sendEvent(updateEvent, roomHandler.getRoom(roomName).getIndex());
-                    }
-                });
-        server.addEventListener(leaveEvent, String.class,
-                (client, roomName, ackRequest) -> client.leaveRoom(roomName));
-        server.startAsync();
+    private String getRoomId(String address) {
+        if (address.startsWith(ADDR_PREFIX)) {
+            return address.substring(ADDR_PREFIX.length());
+        } else {
+            return null;
+        }
     }
 
-    public void stop() {
-        server.stop();
+    public void mount(Router router) {
+        router.route("/sock/*").handler(sockJSHandler);
     }
 
     public void publishUpdate(String room, String data) {
-        server.getRoomOperations(room).sendEvent(updateEvent, data);
+        vertx.eventBus().publish(ADDR_PREFIX + room, data);
     }
 }

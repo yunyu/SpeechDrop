@@ -51,6 +51,7 @@ public class SpeechDropApplication {
     );
     public static final long maxUploadSize = 5 * 1024 * 1024;
     private static final String TEXT_HTML = "text/html; charset=utf-8";
+    private static final String APPLICATION_JSON_PRODUCES = "application/json";
     private static final String APPLICATION_JSON = "application/json; charset=utf-8";
 
     private final Vertx vertx;
@@ -125,7 +126,7 @@ public class SpeechDropApplication {
             }
         });
 
-        router.route("/:roomid/index").method(GET).produces(APPLICATION_JSON).handler(ctx -> {
+        router.route("/:roomid/index").method(GET).produces(APPLICATION_JSON_PRODUCES).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
                 sendEmptyIndex(ctx, 404);
@@ -178,7 +179,7 @@ public class SpeechDropApplication {
             }
         });
 
-        router.route("/:roomid/upload").method(POST).produces(APPLICATION_JSON).handler(ctx -> {
+        router.route("/:roomid/upload").method(POST).produces(APPLICATION_JSON_PRODUCES).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
                 logger().warning("(Upload) Nonexist " + roomId);
@@ -188,7 +189,7 @@ public class SpeechDropApplication {
                 r.handleUpload(ctx).setHandler(ar -> {
                     if (ar.succeeded()) {
                         String index = ar.result();
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
                         broadcaster.publishUpdate(r.getId(), index);
                     } else {
                         ctx.response().setStatusCode(400).end(
@@ -199,7 +200,7 @@ public class SpeechDropApplication {
             }
         });
 
-        router.route("/:roomid/delete").method(POST).produces(APPLICATION_JSON).handler(ctx -> {
+        router.route("/:roomid/delete").method(POST).produces(APPLICATION_JSON_PRODUCES).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
                 logger().warning("(Upload) Nonexist " + roomId);

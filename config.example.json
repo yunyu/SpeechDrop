@@ -3,5 +3,5 @@
 	"mediaUrl": "https://media.speechdrop.net/uploads/",
 	"purgeIntervalInSeconds": 5184000,
 	"host": "127.0.0.1",
-	"port": 6969
+	"port": 6901
 }

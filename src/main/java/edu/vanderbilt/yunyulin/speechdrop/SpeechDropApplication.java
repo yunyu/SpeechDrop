@@ -50,8 +50,8 @@ public class SpeechDropApplication {
             "text/richtext" // IE11 rtf
     );
     public static final long maxUploadSize = 5 * 1024 * 1024;
-    private static final String TEXT_HTML = "text/html";
-    private static final String APPLICATION_JSON = "application/json";
+    private static final String TEXT_HTML = "text/html; charset=utf-8";
+    private static final String APPLICATION_JSON = "application/json; charset=utf-8";
 
     private final Vertx vertx;
     private final JsonObject config;

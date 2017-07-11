@@ -26,9 +26,12 @@ public class IndexHandler {
     private List<FileEntry> entries;
     private boolean loaded = false;
 
-    public IndexHandler(File uploadDirectory, Handler<IndexHandler> loadHandler) {
+    public IndexHandler(File uploadDirectory) {
         this.uploadDirectory = uploadDirectory;
         indexFile = new File(uploadDirectory, "index");
+    }
+
+    public void load(Handler<IndexHandler> onComplete) {
         if (!indexFile.exists()) {
             entries = new ArrayList<>();
         } else {
@@ -38,7 +41,7 @@ public class IndexHandler {
                             mapper.readValue(res.result().toString(), FileEntry[].class)
                     ));
                     loaded = true;
-                    loadHandler.handle(this);
+                    onComplete.handle(this);
                 } catch (IOException e) { // This should never happen
                     e.printStackTrace();
                 }

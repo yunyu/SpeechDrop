@@ -57,7 +57,7 @@ public class SpeechDropApplication extends AbstractVerticle {
     private static final String APPLICATION_JSON = "application/json";
 
     private final RoomHandler roomHandler;
-    private Broadcaster broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
+    private final Broadcaster broadcaster;
 
     String mainPage;
     String roomTemplate;
@@ -75,6 +75,7 @@ public class SpeechDropApplication extends AbstractVerticle {
 
         // Initialize rooms
         roomHandler = new RoomHandler(vertx);
+        broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
 
         // Initialize templates
         this.mainPage = mainPage;

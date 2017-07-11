@@ -32,7 +32,7 @@ public class Room {
 
         File uploadDirectory = new File(SpeechDropApplication.BASE_PATH, id);
         vertx().fileSystem().mkdir(uploadDirectory.getPath(), res ->
-                new IndexHandler(uploadDirectory, loadedIndex -> {
+                new IndexHandler(uploadDirectory).load(loadedIndex -> {
                     this.indexHandler = loadedIndex;
                     while (!queuedOperations.isEmpty()) {
                         queuedOperations.pop().handle(loadedIndex);

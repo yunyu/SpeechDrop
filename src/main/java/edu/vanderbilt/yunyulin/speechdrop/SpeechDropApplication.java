@@ -10,8 +10,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.*;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +54,7 @@ public class SpeechDropApplication {
     private static final String APPLICATION_JSON = "application/json";
 
     private final Vertx vertx;
+    private final JsonObject config;
     private final RoomHandler roomHandler;
     private final Broadcaster broadcaster;
 
@@ -61,8 +62,9 @@ public class SpeechDropApplication {
     private final String roomTemplate;
     private final String aboutPage;
 
-    public SpeechDropApplication(Vertx vertx, String mainPage, String roomTemplate, String aboutPage) {
+    public SpeechDropApplication(Vertx vertx, JsonObject config, String mainPage, String roomTemplate, String aboutPage) {
         this.vertx = vertx;
+        this.config = config;
 
         // Initialize logging
         logger = Logger.getLogger("SpeechDrop");
@@ -95,6 +97,9 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
+        router.route().handler(CookieHandler.create());
+        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+        router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
@@ -209,6 +214,7 @@ public class SpeechDropApplication {
             }
         });
 
+        String mediaUrl = config.getString("mediaUrl");
         router.route("/:roomid").method(GET).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
@@ -218,6 +224,7 @@ public class SpeechDropApplication {
                 r.getIndex().setHandler(ar -> {
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
                             .end(roomTemplate
+                                    .replace("{% MEDIA_URL %}", mediaUrl)
                                     .replace("{% INDEX %}", ar.result())
                                     .replace("{% ROOM %}", r.getId())
                                     .replace("{% NAME %}",

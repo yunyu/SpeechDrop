@@ -3,6 +3,7 @@ package edu.vanderbilt.yunyulin.speechdrop;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.Utils;
 
@@ -22,6 +23,7 @@ public class SpeechDropVerticle extends AbstractVerticle {
         Router router = Router.router(vertx);
 
         new SpeechDropApplication(vertx,
+                new JsonObject().put("csrfSecret", "ayy lmao$1337").put("mediaUrl", "https://media.speechdrop.net/uploads/"),
                 Utils.readFileToString(vertx, "main.html"),
                 Utils.readFileToString(vertx, "room.html"),
                 Utils.readFileToString(vertx, "about.html")

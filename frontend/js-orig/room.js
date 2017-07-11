@@ -22,6 +22,7 @@ function processFileList(newList) {
     return processed;
 }
 
+var csrfToken = Cookies.get('XSRF-TOKEN');
 var uploadedFiles = new Vue({
     el: '#room-container',
     data: {
@@ -81,7 +82,7 @@ var uploadedFiles = new Vue({
                     }, 2000);
                 },
                 sending: function (file, xhr, formData) {
-                    formData.append("_csrf_token", csrf);
+                    formData.append("X-XSRF-TOKEN", csrfToken);
                     ga('send', 'event', 'Room', 'upload', roomId);
                 },
                 createImageThumbnails: false,
@@ -106,8 +107,9 @@ var uploadedFiles = new Vue({
                 if (r.readyState !== 4 || r.status !== 200) return;
                 processFileList(JSON.parse(r.responseText));
             };
-            var data = "fileIndex=" + fileIndex + "&_csrf_token=" + csrf;
+            var data = "fileIndex=" + fileIndex;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            r.setRequestHeader('X-XSRF-TOKEN', csrfToken);
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
         }

@@ -2,12 +2,12 @@ package edu.vanderbilt.yunyulin.speechdrop.handlers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.impl.Utils;
 import lombok.Getter;
 
 import java.io.File;
@@ -38,7 +38,7 @@ public class RoomHandler {
             dataStore = new HashMap<>();
         } else {
             try {
-                dataStore = mapper.readValue(com.google.common.io.Files.toString(roomsFile, Charsets.UTF_8),
+                dataStore = mapper.readValue(Utils.readFileToString(vertx, roomsFile.getPath()),
                         mapper.getTypeFactory().constructMapType(HashMap.class, String.class, RoomData.class));
             } catch (IOException e) {
                 e.printStackTrace();

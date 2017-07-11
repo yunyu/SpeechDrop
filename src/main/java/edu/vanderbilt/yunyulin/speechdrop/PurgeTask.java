@@ -19,7 +19,7 @@ public class PurgeTask {
             List<String> toRemove = new ArrayList<>();
             roomHandler.getDataStore().forEach((k, v) -> {
                 // 10 min deletion
-                if (System.currentTimeMillis() - v.ctime > Bootstrap.TWO_MONTHS * 1000) { // Unix time, so no zoned stuff
+                if (System.currentTimeMillis() - v.ctime > SpeechDropVerticle.TWO_MONTHS * 1000) { // Unix time, so no zoned stuff
                     toRemove.add(k);
                 }
             });

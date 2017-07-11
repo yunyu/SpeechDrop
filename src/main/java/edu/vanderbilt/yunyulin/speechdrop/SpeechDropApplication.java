@@ -21,8 +21,9 @@ import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
-import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.LOCALHOST;
-import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.SIO_PORT;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle.LOCALHOST;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle.SIO_PORT;
+import static io.vertx.core.http.HttpHeaders.LOCATION;
 import static io.vertx.core.http.HttpMethod.*;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
@@ -77,7 +78,7 @@ public class SpeechDropApplication {
         // Initialize templates
         this.mainPage = mainPage;
         this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", Joiner.on(",").join(allowedMimeTypes));
-        this.aboutPage = aboutPage.replace("{% VERSION %}", Bootstrap.VERSION);
+        this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
 
         // Initialize broadcaster
         broadcaster.start();
@@ -87,8 +88,12 @@ public class SpeechDropApplication {
         ctx.response().setStatusCode(errCode).putHeader(CONTENT_TYPE, APPLICATION_JSON).end(EMPTY_INDEX);
     }
 
+    private void redirect(RoutingContext ctx, String location) {
+        ctx.response().setStatusCode(302).putHeader(LOCATION, location).end();
+    }
+
     public void mount(Router router) {
-        logger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
+        logger().info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
         BASE_PATH.mkdir();
         new PurgeTask(roomHandler, vertx).schedule();
 
@@ -107,10 +112,10 @@ public class SpeechDropApplication {
             // logger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
             if (roomName != null) roomName = roomName.trim();
             if (roomName == null || roomName.length() == 0 || roomName.length() > 60) {
-                ctx.reroute("/");
+                redirect(ctx, "/");
             } else {
                 Room r = roomHandler.makeRoom(roomName);
-                ctx.reroute("/" + r.getId());
+                redirect(ctx, "/" + r.getId());
             }
         });
 
@@ -205,8 +210,9 @@ public class SpeechDropApplication {
 
         router.route("/:roomid").method(GET).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
+            logger().info("Hitting " + roomId);
             if (!roomHandler.roomExists(roomId)) {
-                ctx.reroute("/");
+                redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 r.getIndex().setHandler(ar -> {

@@ -25,10 +25,11 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>edu.vanderbilt.yunyulin.speechdrop.Bootstrap</mainClass>
+                            <mainClass>io.vertx.core.Launcher</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Main-Verticle>edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle</Main-Verticle>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>

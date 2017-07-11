@@ -11,3 +11,7 @@ build
 *.iws
 target
 /dependency-reduced-pom.xml
+.vertx
+file-uploads
+public
+rooms.json

@@ -65,11 +65,13 @@ public class IndexHandler {
         checkLoad();
         logger().info("[" + uploadDirectory.getName() + "] Processing delete for index "
                 + index);
-        entries.set(index, null);
-        vertx().fileSystem().deleteRecursive(
-                new File(uploadDirectory, Integer.toString(index)).getPath(), true,
-                res -> indexHandler.handle(writeIndex())
-        );
+        if (entries.get(index) != null) {
+            entries.set(index, null);
+            vertx().fileSystem().deleteRecursive(
+                    new File(uploadDirectory, Integer.toString(index)).getPath(), true,
+                    res -> indexHandler.handle(writeIndex())
+            );
+        }
     }
 
     public Collection<File> getFiles() {

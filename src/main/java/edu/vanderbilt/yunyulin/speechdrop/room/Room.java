@@ -49,36 +49,36 @@ public class Room {
         }
     }
 
-    public AsyncResult<String> handleUpload(RoutingContext ctx) throws Exception {
+    public Future<String> handleUpload(RoutingContext ctx) {
         Future<String> uploadFuture = Future.future();
         FileUpload uploadedFile = ctx.fileUploads().iterator().next();
         Date now = new Date();
 
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
-            uploadFuture.fail("bad_type");
+            uploadFuture.fail(new Exception("bad_type"));
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
-            uploadFuture.fail("too_large");
+            uploadFuture.fail(new Exception("too_large"));
         }
 
         scheduleOperation(index -> index.addFile(uploadedFile, now, uploadFuture::complete));
         return uploadFuture;
     }
 
-    public AsyncResult<String> getIndex() {
+    public Future<String> getIndex() {
         Future<String> indexFuture = Future.future();
         scheduleOperation(index -> indexFuture.complete(index.getIndexString()));
         return indexFuture;
     }
 
-    public AsyncResult<Collection<File>> getFiles() {
+    public Future<Collection<File>> getFiles() {
         Future<Collection<File>> fileFuture = Future.future();
         scheduleOperation(index -> fileFuture.complete(index.getFiles()));
         return fileFuture;
     }
 
-    public AsyncResult<String> deleteFile(int fileIndex) {
+    public Future<String> deleteFile(int fileIndex) {
         Future<String> deleteFuture = Future.future();
         scheduleOperation(index -> index.deleteFile(fileIndex, deleteFuture::complete));
         return deleteFuture;

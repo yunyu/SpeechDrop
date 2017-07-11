@@ -8,6 +8,7 @@ import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -54,9 +55,9 @@ public class SpeechDropApplication extends AbstractVerticle {
     private final RoomHandler roomHandler;
     private final Broadcaster broadcaster;
 
-    String mainPage;
-    String roomTemplate;
-    String aboutPage;
+    private final String mainPage;
+    private final String roomTemplate;
+    private final String aboutPage;
 
     public SpeechDropApplication(String mainPage, String roomTemplate, String aboutPage) {
         // Initialize logging
@@ -175,7 +176,9 @@ public class SpeechDropApplication extends AbstractVerticle {
                             ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
                             broadcaster.publishUpdate(r.getId(), index);
                         } else {
-                            ctx.response().setStatusCode(500).end(ar.cause().getMessage());
+                            ctx.response().setStatusCode(400).end(
+                                    new JsonObject().put("err", ar.cause().getMessage()).toString()
+                            );
                         }
                     });
             }

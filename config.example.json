@@ -1,0 +1,8 @@
+{
+	"csrfSecret": "RANDOM_STRING_HERE",
+	"mediaUrl": "https://media.speechdrop.net/uploads/",
+	"debugMediaDownloads": true,
+	"purgeIntervalInSeconds": 5184000,
+	"host": "127.0.0.1",
+	"port": 6901
+}

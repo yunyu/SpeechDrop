@@ -8,7 +8,8 @@ var codeInput = new Vue({
     data: {
         code: '',
         hint: charRemaining(''),
-        codeInputClass: null
+        codeInputClass: null,
+        csrfToken: Cookies.get('XSRF-TOKEN')
     },
     watch: {
         code: function (val) {

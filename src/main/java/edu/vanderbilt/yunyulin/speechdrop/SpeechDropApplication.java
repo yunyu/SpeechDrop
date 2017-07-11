@@ -1,35 +1,39 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Joiner;
 import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-import lombok.Getter;
-import ro.pippo.core.*;
-import ro.pippo.core.route.CSRFHandler;
-import ro.pippo.core.route.RouteContext;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.*;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
-import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.LOCALHOST;
-import static edu.vanderbilt.yunyulin.speechdrop.Bootstrap.SIO_PORT;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static io.vertx.core.http.HttpHeaders.LOCATION;
+import static io.vertx.core.http.HttpMethod.GET;
+import static io.vertx.core.http.HttpMethod.POST;
 
-public class SpeechDropApplication extends Application {
+public class SpeechDropApplication {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     private static Logger logger;
 
     // Lombok getter won't work with import static
-    public static Logger getLogger() {
+    public static Logger logger() {
         return logger;
     }
 
@@ -46,18 +50,21 @@ public class SpeechDropApplication extends Application {
             "text/richtext" // IE11 rtf
     );
     public static final long maxUploadSize = 5 * 1024 * 1024;
+    private static final String TEXT_HTML = "text/html";
+    private static final String APPLICATION_JSON = "application/json";
 
-    private RoomHandler roomHandler = new RoomHandler();
-    private PurgeTask purgeTask = new PurgeTask(roomHandler);
-    private CSRFHandler csrfHandler = new CSRFHandler();
-    private Broadcaster broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
+    private final Vertx vertx;
+    private final JsonObject config;
+    private final RoomHandler roomHandler;
+    private final Broadcaster broadcaster;
 
-    String mainPage;
-    String roomTemplate;
-    String aboutPage;
+    private final String mainPage;
+    private final String roomTemplate;
+    private final String aboutPage;
 
-    public SpeechDropApplication(String mainPage, String roomTemplate, String aboutPage, PippoSettings settings) {
-        super(settings);
+    public SpeechDropApplication(Vertx vertx, JsonObject config, String mainPage, String roomTemplate, String aboutPage) {
+        this.vertx = vertx;
+        this.config = config;
 
         // Initialize logging
         logger = Logger.getLogger("SpeechDrop");
@@ -66,157 +73,170 @@ public class SpeechDropApplication extends Application {
         consoleHandler.setFormatter(new ConciseFormatter());
         logger.addHandler(consoleHandler);
 
+        // Initialize rooms
+        roomHandler = new RoomHandler(vertx);
+        broadcaster = new Broadcaster(vertx, roomHandler);
+
         // Initialize templates
         this.mainPage = mainPage;
-        this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", Joiner.on(",").join(allowedMimeTypes));
-        this.aboutPage = aboutPage.replace("{% VERSION %}", Bootstrap.VERSION);
-
-        // Initialize broadcaster
-        broadcaster.start();
+        this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes));
+        this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
     }
 
-    @Override
-    protected void onInit() {
-        getLogger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
+    private void sendEmptyIndex(RoutingContext ctx, int errCode) {
+        ctx.response().setStatusCode(errCode).putHeader(CONTENT_TYPE, APPLICATION_JSON).end(EMPTY_INDEX);
+    }
 
-        setMaximumUploadSize(maxUploadSize);
-        BASE_PATH.mkdir();
+    private void redirect(RoutingContext ctx, String location) {
+        ctx.response().setStatusCode(302).putHeader(LOCATION, location).end();
+    }
 
-        purgeTask.start();
+    public void mount(Router router) throws IOException {
+        logger().info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
+        Files.createDirectories(BASE_PATH.toPath());
+        new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
-        ALL("/", csrfHandler);
-        GET("/", ctx -> sendWithCSRF(ctx, mainPage));
+        router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
+        router.route().handler(CookieHandler.create());
+        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)));
+        router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
 
-        GET("/about", ctx -> ctx.send(aboutPage));
+        router.route("/").method(GET).handler(ctx ->
+                ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
+        );
 
-        ALL("/makeroom", csrfHandler);
-        POST("/makeroom", ctx -> {
-            String roomName = ctx.getParameter("name").toString();
-            // getLogger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
+        broadcaster.mount(router);
+
+        router.route("/static/*").handler(StaticHandler.create("static"));
+
+        router.route("/about").method(GET).handler(ctx ->
+                ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(aboutPage)
+        );
+
+        router.route("/makeroom").method(POST).handler(ctx -> {
+            String roomName = ctx.request().getFormAttribute("name");
+            // logger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
             if (roomName != null) roomName = roomName.trim();
             if (roomName == null || roomName.length() == 0 || roomName.length() > 60) {
-                ctx.redirect("/");
+                redirect(ctx, "/");
             } else {
                 Room r = roomHandler.makeRoom(roomName);
-                ctx.redirect("/" + r.getId());
+                redirect(ctx, "/" + r.getId());
             }
         });
 
-        GET("/{roomid}/", ctx -> ctx.redirect("/" + ctx.getParameter("roomid").toString()));
-        ALL("/{roomid}", csrfHandler);
-        GET("/{roomid}", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
+        router.route("/:roomid/index").method(GET).produces(APPLICATION_JSON).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                ctx.redirect("/");
+                sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                try {
-                    sendWithCSRF(ctx, roomTemplate
-                            .replace("{% INDEX %}", r.getIndex())
-                            .replace("{% ROOM %}", r.getId())
-                            .replace("{% NAME %}",
-                                    HtmlEscapers.htmlEscaper().escape(r.getData().name)));
-                } catch (JsonProcessingException e) {
-                    ctx.status(500);
-                    e.printStackTrace();
-                }
+                r.getIndex().setHandler(ar ->
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
+                );
             }
         });
 
-        GET("/{roomid}/index", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
+        router.route("/:roomid/archive").method(GET).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                ctx.status(404);
-                ctx.send(EMPTY_INDEX);
+                ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                try {
-                    ctx.getResponse().contentType(HttpConstants.ContentType.APPLICATION_JSON);
-                    ctx.getResponse().send(r.getIndex());
-                } catch (JsonProcessingException e) {
-                    ctx.status(500);
-                    e.printStackTrace();
-                }
-            }
-        });
+                r.getFiles().setHandler(ar -> {
+                    Collection<File> files = ar.result();
+                    String outFile = r.getData().name.trim() + ".zip";
 
-        GET("/{roomid}/archive", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
-            if (!roomHandler.roomExists(roomId)) {
-                ctx.status(404);
-            } else {
-                Room r = roomHandler.getRoom(roomId);
-                Collection<File> files = r.getFiles();
-                String outFile = r.getData().name.trim() + ".zip";
-                Response res = ctx.getResponse();
-                if (files.size() == 0) {
-                    res.file(outFile, Util.getEmptyZipInputStream());
-                } else {
-                    OutputStream out = res.chunked(true).filenameHeader(outFile).getOutputStream();
-                    try {
-                        Util.zip(files, out);
-                        res.getHttpServletResponse().flushBuffer();
-                    } catch (IOException e) {
-                        throw new PippoRuntimeException(e);
+                    Handler<Buffer> writeBufferToResponse = buf -> ctx.response()
+                            .setChunked(true)
+                            .putHeader("Content-Disposition", "attachment; filename=\"" + outFile + "\"")
+                            .putHeader(CONTENT_TYPE, "application/octet-stream")
+                            .end(buf);
+
+                    if (files.size() == 0) {
+                        writeBufferToResponse.handle(Util.getEmptyZipBuffer());
+                    } else {
+                        vertx.<Buffer>executeBlocking(fut -> {
+                            try {
+                                fut.complete(Util.zip(files));
+                            } catch (IOException e) {
+                                fut.fail(e);
+                            }
+                        }, false, res -> {
+                            if (res.succeeded()) {
+                                writeBufferToResponse.handle(res.result());
+                            } else {
+                                ctx.response().setStatusCode(500).end();
+                            }
+                        });
                     }
-                }
+                });
             }
         });
 
-        ALL("/{roomid}/upload", csrfHandler);
-        POST("/{roomid}/upload", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
-            // getLogger().info("CSRF token: " + ctx.getParameter(CSRFHandler.TOKEN));
+        router.route("/:roomid/upload").method(POST).produces(APPLICATION_JSON).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                getLogger().warning("(Upload) Nonexist " + roomId);
-                ctx.status(500);
-                ctx.send(EMPTY_INDEX);
+                logger().warning("(Upload) Nonexist " + roomId);
+                ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                try {
-                    String index = r.handleUpload(ctx);
-                    ctx.send(index);
-                    broadcaster.publishUpdate(r.getId(), index);
-                } catch (Exception e) {
-                    ctx.status(500);
-                    ctx.send(e.getMessage());
-                }
+                r.handleUpload(ctx).setHandler(ar -> {
+                    if (ar.succeeded()) {
+                        String index = ar.result();
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
+                        broadcaster.publishUpdate(r.getId(), index);
+                    } else {
+                        ctx.response().setStatusCode(400).end(
+                                new JsonObject().put("err", ar.cause().getMessage()).toString()
+                        );
+                    }
+                });
             }
         });
 
-        ALL("/{roomid}/delete", csrfHandler);
-        POST("/{roomid}/delete", ctx -> {
-            String roomId = ctx.getParameter("roomid").toString();
+        router.route("/:roomid/delete").method(POST).produces(APPLICATION_JSON).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                getLogger().warning("(Upload) Nonexist " + roomId);
-                ctx.status(500);
-                ctx.send(EMPTY_INDEX);
+                logger().warning("(Upload) Nonexist " + roomId);
+                sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.deleteFile(ctx.getParameter("fileIndex").toInt());
-                try {
-                    String index = r.getIndex();
-                    ctx.send(index);
-                    broadcaster.publishUpdate(r.getId(), index);
-                } catch (JsonProcessingException e) {
-                    ctx.status(500);
-                    ctx.send(e.getMessage());
+                String fileIndex = ctx.request().getFormAttribute("fileIndex");
+                if (fileIndex == null) {
+                    sendEmptyIndex(ctx, 400);
+                } else {
+                    r.deleteFile(Integer.parseInt(fileIndex)).setHandler(ar -> {
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
+                        broadcaster.publishUpdate(r.getId(), ar.result());
+                    });
                 }
             }
         });
-    }
 
-    @Override
-    protected void onDestroy() {
-        getLogger().info("Shutting down");
-        broadcaster.stop();
-    }
-
-    private void sendWithCSRF(RouteContext ctx, String response) {
-        String csrfToken = ctx.getSession(CSRFHandler.TOKEN);
-        if (csrfToken == null) { // This should never happen
-            csrfToken = "";
+        String mediaUrl;
+        if (config.getBoolean("debugMediaDownloads")) {
+            mediaUrl = "/media/";
+            router.route("/media/*").handler(StaticHandler.create("public"));
+        } else {
+            mediaUrl = config.getString("mediaUrl");
         }
-        ctx.send(response.replace("{% CSRF_TOKEN %}", csrfToken));
+        router.route("/:roomid").method(GET).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
+            if (!roomHandler.roomExists(roomId)) {
+                redirect(ctx, "/");
+            } else {
+                Room r = roomHandler.getRoom(roomId);
+                r.getIndex().setHandler(ar -> {
+                    ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
+                            .end(roomTemplate
+                                    .replace("{% MEDIA_URL %}", mediaUrl)
+                                    .replace("{% INDEX %}", ar.result())
+                                    .replace("{% ROOM %}", r.getId())
+                                    .replace("{% NAME %}",
+                                            HtmlEscapers.htmlEscaper().escape(r.getData().name)));
+                });
+            }
+        });
     }
 }

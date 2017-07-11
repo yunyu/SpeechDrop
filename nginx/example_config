@@ -1,65 +1,55 @@
 server {
-       listen       80;
-       server_name  www.speechdrop.net;
-       return       301 https://speechdrop.net$request_uri;
+  listen       80;
+  server_name  www.speechdrop.net;
+  return       301 https://speechdrop.net$request_uri;
 }
 
 server {
-       listen 80;
-       include /etc/nginx/cloudflare.conf;
-       index index.html;
+  listen 80;
+  include /etc/nginx/cloudflare.conf;
+  index index.html;
 
-       server_name speechdrop.net;
-       client_max_body_size 5m;
+  server_name speechdrop.net;
+  client_max_body_size 5m;
 
-       location / {
-                proxy_set_header        Host $host:$server_port;
-                proxy_set_header        X-Real-IP $remote_addr;
-                proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header        X-Forwarded-Proto $scheme;
+  location / {
+    proxy_http_version 1.1;
+    proxy_pass http://127.0.0.1:6901;
 
-                proxy_pass          http://127.0.0.1:6969;
-                proxy_read_timeout  90;
+    proxy_set_header Host $host:$server_port;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 
-                proxy_redirect      http://127.0.0.1:6969 http://speechdrop.net/;
-       }
+    location /sock/ {
+      proxy_http_version 1.1;
+      proxy_pass http://127.0.0.1:6901/sock/;
+      proxy_buffering off;
+      proxy_read_timeout 3600;
+
+      proxy_set_header Host $host:$server_port;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    }
+  }
 }
 
 server {
-       listen 80;
-       include /etc/nginx/cloudflare.conf;
+  listen 80;
+  include /etc/nginx/cloudflare.conf;
+  index index.html;
 
-       server_name sock.speechdrop.net;
+  root /home/speechdrop/speechdrop/public;
+  server_name media.speechdrop.net;
 
-       location / {
-                proxy_pass          http://127.0.0.1:6970;
-                client_body_timeout 1m;
-                proxy_read_timeout 86400s;
+  location / {
+    try_files $uri $uri/ =404;
+  }
 
-                proxy_set_header        Host $host:$server_port;
-                proxy_set_header        X-Real-IP $remote_addr;
-                proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header        X-Forwarded-Proto $scheme;
-
-                proxy_http_version 1.1;
-                proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection "upgrade";
-       }
-}
-
-server {
-        listen 80;
-        include /etc/nginx/cloudflare.conf;
-        index index.html;
-
-        root /usr/share/nginx/speechdrop/public;
-        server_name media.speechdrop.net;
-
-        location / {
-                try_files $uri $uri/ =404;
-        }
-
-        location ~ ^/uploads/([^/]+)/index$ {
-                return 403;
-        }
+  location ~ ^/uploads/([^/]+)/index$ {
+    return 403;
+  }
 }

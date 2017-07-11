@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
+import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.FileUpload;
 import lombok.Data;
@@ -24,24 +24,30 @@ public class IndexHandler {
     private File indexFile;
 
     private List<FileEntry> entries;
+    private boolean loaded = false;
 
-    public IndexHandler(UploadHandler uploadHandler) {
-        this.uploadDirectory = uploadHandler.getUploadDirectory();
+    public IndexHandler(File uploadDirectory, Handler<IndexHandler> loadHandler) {
+        this.uploadDirectory = uploadDirectory;
         indexFile = new File(uploadDirectory, "index");
         if (!indexFile.exists()) {
             entries = new ArrayList<>();
         } else {
-            try {
-                entries = new ArrayList<>(Arrays.asList(
-                        mapper.readValue(com.google.common.io.Files.toString(indexFile, Charsets.UTF_8), FileEntry[].class)
-                ));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            vertx().fileSystem().readFile(indexFile.getPath(), res -> {
+                try {
+                    entries = new ArrayList<>(Arrays.asList(
+                            mapper.readValue(res.result().toString(), FileEntry[].class)
+                    ));
+                    loaded = true;
+                    loadHandler.handle(this);
+                } catch (IOException e) { // This should never happen
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
-    public void addFile(FileUpload uploadedFile, Date creationTime) {
+    public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
+        checkLoad();
         logger().info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
@@ -49,22 +55,25 @@ public class IndexHandler {
         vertx().fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
             File dest = new File(destDir, uploadedFile.fileName());
             entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
-            vertx().fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(), res -> {
-                if (res.succeeded()) writeIndex();
-            });
+            vertx().fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
+                    res -> indexHandler.handle(writeIndex())
+            );
         });
     }
 
-    public void deleteFile(int index) {
+    public void deleteFile(int index, Handler<String> indexHandler) {
+        checkLoad();
         logger().info("[" + uploadDirectory.getName() + "] Processing delete for index "
                 + index);
         entries.set(index, null);
         vertx().fileSystem().deleteRecursive(
-                new File(uploadDirectory, Integer.toString(index)).getPath(),true, res -> writeIndex()
+                new File(uploadDirectory, Integer.toString(index)).getPath(), true,
+                res -> indexHandler.handle(writeIndex())
         );
     }
 
     public Collection<File> getFiles() {
+        checkLoad();
         List<File> files = new ArrayList<>(entries.size());
         int index = 0;
         for (FileEntry entry : entries) {
@@ -77,18 +86,26 @@ public class IndexHandler {
         return files;
     }
 
-    public String getIndexString() throws JsonProcessingException {
-        return mapper.writeValueAsString(entries);
+    public String getIndexString() {
+        checkLoad();
+        try {
+            return mapper.writeValueAsString(entries);
+        } catch (JsonProcessingException e) { // This should never happen
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private void writeIndex() {
-        try {
-            vertx().fileSystem().writeFile(indexFile.getPath(),
-                    Buffer.buffer(mapper.writeValueAsString(entries)),
-                    null);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+    private String writeIndex() {
+        String indexString = getIndexString();
+        vertx().fileSystem().writeFile(indexFile.getPath(),
+                Buffer.buffer(indexString),
+                null);
+        return indexString;
+    }
+
+    private void checkLoad() {
+        if (!loaded) throw new IllegalStateException("Index not loaded");
     }
 
     private static class FileEntry {

@@ -1,24 +1,21 @@
 package edu.vanderbilt.yunyulin.speechdrop.handlers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.MoreExecutors;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
-import edu.vanderbilt.yunyulin.speechdrop.Util;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 
@@ -27,30 +24,29 @@ public class RoomHandler {
             "abcdefgh  k mnop rst  wx zABCDEFGH JKLMN PQR T  WXY 34 6 89".replaceAll(" ", "").toCharArray();
     private static final Random rand = new SecureRandom();
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final ExecutorService saveThread =
-            MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newFixedThreadPool(1));
-    private static final ExecutorService deletePool =
-            MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newFixedThreadPool(4));
 
     @Getter
     private Map<String, RoomData> dataStore;
     private File roomsFile;
 
-    public RoomHandler() {
+    private final Vertx vertx;
+
+    public RoomHandler(Vertx vertx) {
+        this.vertx = vertx;
         roomsFile = new File("rooms.json");
         if (!roomsFile.exists()) {
-            dataStore = new ConcurrentHashMap<>();
+            dataStore = new HashMap<>();
         } else {
             try {
                 dataStore = mapper.readValue(com.google.common.io.Files.toString(roomsFile, Charsets.UTF_8),
-                        mapper.getTypeFactory().constructMapType(ConcurrentHashMap.class, String.class, RoomData.class));
+                        mapper.getTypeFactory().constructMapType(HashMap.class, String.class, RoomData.class));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public String nextSessionId() {
+    private String nextSessionId() {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < 6; i++) {
             char selectedChar = allowedChars[rand.nextInt(allowedChars.length)];
@@ -70,7 +66,7 @@ public class RoomHandler {
         }
         dataStore.put(newId, new RoomData(name, System.currentTimeMillis()));
         logger().info("[" + newId + "] Created room with name " + name);
-        dispatchSave();
+        writeRooms();
         return getRoom(newId);
     }
 
@@ -78,31 +74,21 @@ public class RoomHandler {
         return new Room(id, dataStore.get(id));
     }
 
-    public void dispatchSave() {
-        saveThread.execute(() -> {
-            try {
-                mapper.writeValue(roomsFile, dataStore);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+    private void writeRooms() {
+        try {
+            vertx.fileSystem().writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)), null);
+        } catch (JsonProcessingException e) { // This should never happen
+            e.printStackTrace();
+        }
     }
 
     public boolean deleteRoom(String id) {
-        if (!roomExists(id)) {
+        if (dataStore.remove(id) == null) {
             return false;
         }
-        deletePool.execute(() -> {
-            try {
-                Path toDelete = new File(SpeechDropApplication.BASE_PATH, id).toPath();
-                Util.deleteFolderRecursive(toDelete);
-                dataStore.remove(id);
-                dispatchSave();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+
+        File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
+        vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, res -> writeRooms());
         return true;
     }
-
 }

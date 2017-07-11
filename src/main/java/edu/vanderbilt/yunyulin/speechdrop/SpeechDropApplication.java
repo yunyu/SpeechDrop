@@ -53,8 +53,7 @@ public class SpeechDropApplication extends AbstractVerticle {
     );
     public static final long maxUploadSize = 5 * 1024 * 1024;
 
-    private RoomHandler roomHandler = new RoomHandler();
-    private PurgeTask purgeTask = new PurgeTask(roomHandler);
+    private final RoomHandler roomHandler;
     private Broadcaster broadcaster = new Broadcaster(LOCALHOST, SIO_PORT, roomHandler);
 
     String mainPage;
@@ -71,6 +70,9 @@ public class SpeechDropApplication extends AbstractVerticle {
         consoleHandler.setFormatter(new ConciseFormatter());
         logger.addHandler(consoleHandler);
 
+        // Initialize rooms
+        roomHandler = new RoomHandler(vertx);
+
         // Initialize templates
         this.mainPage = mainPage;
         this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", Joiner.on(",").join(allowedMimeTypes));
@@ -84,7 +86,7 @@ public class SpeechDropApplication extends AbstractVerticle {
     public void start() {
         logger().info("Starting SpeechDrop (" + Bootstrap.VERSION + ")");
         BASE_PATH.mkdir();
-        purgeTask.start();
+        new PurgeTask(roomHandler, vertx).schedule();
 
         String TEXT_HTML = "text/html";
         String APPLICATION_JSON = "application/json";

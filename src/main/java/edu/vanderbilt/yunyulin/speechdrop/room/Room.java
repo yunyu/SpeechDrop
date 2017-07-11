@@ -1,39 +1,86 @@
 package edu.vanderbilt.yunyulin.speechdrop.room;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.vanderbilt.yunyulin.speechdrop.handlers.UploadHandler;
+import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
+import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
 import lombok.Getter;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Deque;
+
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.vertx;
 
 public class Room {
     @Getter
     private String id;
-    private UploadHandler uploadHandler;
     @Getter
     private RoomData data;
+
+    private final Deque<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>();
+    private IndexHandler indexHandler;
 
     public Room(String id, RoomData data) {
         this.id = id;
         this.data = data;
-        this.uploadHandler = new UploadHandler(id);
+
+        File uploadDirectory = new File(SpeechDropApplication.BASE_PATH, id);
+        vertx().fileSystem().mkdir(uploadDirectory.getPath(), res ->
+                new IndexHandler(uploadDirectory, loadedIndex -> {
+                    this.indexHandler = loadedIndex;
+                    while (!queuedOperations.isEmpty()) {
+                        queuedOperations.pop().handle(loadedIndex);
+                    }
+                })
+        );
     }
 
-    public String handleUpload(RoutingContext ctx) throws Exception {
-        return uploadHandler.handleUpload(ctx);
+    private void scheduleOperation(Handler<IndexHandler> operation) {
+        if (indexHandler != null) {
+            operation.handle(indexHandler);
+        } else {
+            queuedOperations.push(operation);
+        }
     }
 
-    public String getIndex() throws JsonProcessingException {
-        return uploadHandler.getIndex().getIndexString();
+    public AsyncResult<String> handleUpload(RoutingContext ctx) throws Exception {
+        Future<String> uploadFuture = Future.future();
+        FileUpload uploadedFile = ctx.fileUploads().iterator().next();
+        Date now = new Date();
+
+        String mimeType = uploadedFile.contentType();
+        if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
+            uploadFuture.fail("bad_type");
+        }
+        if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
+            uploadFuture.fail("too_large");
+        }
+
+        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadFuture::complete));
+        return uploadFuture;
     }
 
-    public Collection<File> getFiles() {
-        return uploadHandler.getIndex().getFiles();
+    public AsyncResult<String> getIndex() {
+        Future<String> indexFuture = Future.future();
+        scheduleOperation(index -> indexFuture.complete(index.getIndexString()));
+        return indexFuture;
     }
 
-    public void deleteFile(int index) {
-        uploadHandler.getIndex().deleteFile(index);
+    public AsyncResult<Collection<File>> getFiles() {
+        Future<Collection<File>> fileFuture = Future.future();
+        scheduleOperation(index -> fileFuture.complete(index.getFiles()));
+        return fileFuture;
+    }
+
+    public AsyncResult<String> deleteFile(int fileIndex) {
+        Future<String> deleteFuture = Future.future();
+        scheduleOperation(index -> index.deleteFile(fileIndex, deleteFuture::complete));
+        return deleteFuture;
     }
 }

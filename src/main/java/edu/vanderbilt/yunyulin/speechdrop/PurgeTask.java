@@ -1,30 +1,21 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
+import io.vertx.core.Vertx;
+import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 
+@AllArgsConstructor
 public class PurgeTask {
-    public static final ScheduledExecutorService ses =
-            MoreExecutors.getExitingScheduledExecutorService(
-                    (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1)
-            );
     private final RoomHandler roomHandler;
+    private final Vertx vertx;
 
-    public PurgeTask(RoomHandler roomHandler) {
-        this.roomHandler = roomHandler;
-    }
-
-    public void start() {
-        ses.scheduleAtFixedRate(() -> {
+    public void schedule() {
+        vertx.setPeriodic(3 * 60 * 60 * 1000, id -> {
             List<String> toRemove = new ArrayList<>();
             roomHandler.getDataStore().forEach((k, v) -> {
                 // 10 min deletion
@@ -34,6 +25,6 @@ public class PurgeTask {
             });
             toRemove.forEach(roomHandler::deleteRoom);
             logger().info("Purged " + toRemove.size() + " rooms");
-        }, 0, 3, TimeUnit.HOURS);
+        });
     }
 }

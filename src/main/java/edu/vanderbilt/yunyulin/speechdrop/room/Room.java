@@ -2,7 +2,6 @@ package edu.vanderbilt.yunyulin.speechdrop.room;
 
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -11,10 +10,7 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.Getter;
 
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Deque;
+import java.util.*;
 
 public class Room {
     @Getter
@@ -50,7 +46,13 @@ public class Room {
 
     public Future<String> handleUpload(RoutingContext ctx) {
         Future<String> uploadFuture = Future.future();
-        FileUpload uploadedFile = ctx.fileUploads().iterator().next();
+
+        Iterator<FileUpload> itr = ctx.fileUploads().iterator();
+        if (!itr.hasNext()) {
+            uploadFuture.fail(new Exception("no_file"));
+        }
+
+        FileUpload uploadedFile = itr.next();
         Date now = new Date();
 
         String mimeType = uploadedFile.contentType();

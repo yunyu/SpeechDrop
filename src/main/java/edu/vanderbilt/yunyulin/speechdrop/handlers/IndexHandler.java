@@ -59,9 +59,11 @@ public class IndexHandler {
         File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
         vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
             File dest = new File(destDir, uploadedFile.fileName());
-            entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
             vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
-                    res -> indexHandler.handle(writeIndex())
+                    res -> {
+                        entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
+                        indexHandler.handle(writeIndex());
+                    }
             );
         });
     }
@@ -72,9 +74,9 @@ public class IndexHandler {
                 + index);
         if (entries.get(index) != null) {
             entries.set(index, null);
+            indexHandler.handle(writeIndex());
             vertx.fileSystem().deleteRecursive(
-                    new File(uploadDirectory, Integer.toString(index)).getPath(), true,
-                    res -> indexHandler.handle(writeIndex())
+                    new File(uploadDirectory, Integer.toString(index)).getPath(), true, null
             );
         }
     }

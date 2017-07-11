@@ -170,17 +170,17 @@ public class SpeechDropApplication extends AbstractVerticle {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                    r.handleUpload(ctx).setHandler(ar -> {
-                        if (ar.succeeded()) {
-                            String index = ar.result();
-                            ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
-                            broadcaster.publishUpdate(r.getId(), index);
-                        } else {
-                            ctx.response().setStatusCode(400).end(
-                                    new JsonObject().put("err", ar.cause().getMessage()).toString()
-                            );
-                        }
-                    });
+                r.handleUpload(ctx).setHandler(ar -> {
+                    if (ar.succeeded()) {
+                        String index = ar.result();
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
+                        broadcaster.publishUpdate(r.getId(), index);
+                    } else {
+                        ctx.response().setStatusCode(400).end(
+                                new JsonObject().put("err", ar.cause().getMessage()).toString()
+                        );
+                    }
+                });
             }
         });
 
@@ -209,17 +209,14 @@ public class SpeechDropApplication extends AbstractVerticle {
                 ctx.reroute("/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                try {
+                r.getIndex().setHandler(ar -> {
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
                             .end(roomTemplate
-                                    .replace("{% INDEX %}", r.getIndex())
+                                    .replace("{% INDEX %}", ar.result())
                                     .replace("{% ROOM %}", r.getId())
                                     .replace("{% NAME %}",
                                             HtmlEscapers.htmlEscaper().escape(r.getData().name)));
-                } catch (JsonProcessingException e) {
-                    ctx.response().setStatusCode(500).end();
-                    e.printStackTrace();
-                }
+                });
             }
         });
     }

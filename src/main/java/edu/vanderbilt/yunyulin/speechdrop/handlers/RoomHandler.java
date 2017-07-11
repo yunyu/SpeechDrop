@@ -71,7 +71,7 @@ public class RoomHandler {
     }
 
     public Room getRoom(String id) {
-        return new Room(id, dataStore.get(id));
+        return new Room(vertx, id, dataStore.get(id));
     }
 
     private void writeRooms() {

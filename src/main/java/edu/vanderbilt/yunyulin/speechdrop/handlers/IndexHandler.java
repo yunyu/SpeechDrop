@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.FileUpload;
 import lombok.Data;
@@ -14,28 +15,29 @@ import java.io.IOException;
 import java.util.*;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.vertx;
 
 @Data
 public class IndexHandler {
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private File uploadDirectory;
-    private File indexFile;
+    private final Vertx vertx;
+    private final File uploadDirectory;
+    private final File indexFile;
+
+    public IndexHandler(Vertx vertx, File uploadDirectory) {
+        this.vertx = vertx;
+        this.uploadDirectory = uploadDirectory;
+        this.indexFile = new File(uploadDirectory, "index");
+    }
 
     private List<FileEntry> entries;
     private boolean loaded = false;
-
-    public IndexHandler(File uploadDirectory) {
-        this.uploadDirectory = uploadDirectory;
-        indexFile = new File(uploadDirectory, "index");
-    }
 
     public void load(Handler<IndexHandler> onComplete) {
         if (!indexFile.exists()) {
             entries = new ArrayList<>();
         } else {
-            vertx().fileSystem().readFile(indexFile.getPath(), res -> {
+            vertx.fileSystem().readFile(indexFile.getPath(), res -> {
                 try {
                     entries = new ArrayList<>(Arrays.asList(
                             mapper.readValue(res.result().toString(), FileEntry[].class)
@@ -55,10 +57,10 @@ public class IndexHandler {
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
         File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
-        vertx().fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
+        vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
             File dest = new File(destDir, uploadedFile.fileName());
             entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
-            vertx().fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
+            vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
                     res -> indexHandler.handle(writeIndex())
             );
         });
@@ -70,7 +72,7 @@ public class IndexHandler {
                 + index);
         if (entries.get(index) != null) {
             entries.set(index, null);
-            vertx().fileSystem().deleteRecursive(
+            vertx.fileSystem().deleteRecursive(
                     new File(uploadDirectory, Integer.toString(index)).getPath(), true,
                     res -> indexHandler.handle(writeIndex())
             );
@@ -103,7 +105,7 @@ public class IndexHandler {
 
     private String writeIndex() {
         String indexString = getIndexString();
-        vertx().fileSystem().writeFile(indexFile.getPath(),
+        vertx.fileSystem().writeFile(indexFile.getPath(),
                 Buffer.buffer(indexString),
                 null);
         return indexString;

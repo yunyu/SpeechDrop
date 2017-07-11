@@ -5,6 +5,7 @@ import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
 import lombok.Getter;
@@ -15,24 +16,22 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Deque;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.vertx;
-
 public class Room {
     @Getter
-    private String id;
+    private final String id;
     @Getter
-    private RoomData data;
+    private final RoomData data;
 
     private final Deque<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>();
     private IndexHandler indexHandler;
 
-    public Room(String id, RoomData data) {
+    public Room(Vertx vertx, String id, RoomData data) {
         this.id = id;
         this.data = data;
 
         File uploadDirectory = new File(SpeechDropApplication.BASE_PATH, id);
-        vertx().fileSystem().mkdir(uploadDirectory.getPath(), res ->
-                new IndexHandler(uploadDirectory).load(loadedIndex -> {
+        vertx.fileSystem().mkdir(uploadDirectory.getPath(), res ->
+                new IndexHandler(vertx, uploadDirectory).load(loadedIndex -> {
                     this.indexHandler = loadedIndex;
                     while (!queuedOperations.isEmpty()) {
                         queuedOperations.pop().handle(loadedIndex);

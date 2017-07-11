@@ -29,15 +29,10 @@ public class SpeechDropApplication extends AbstractVerticle {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     private static Logger logger;
-    private static Vertx vertxInstance;
 
     // Lombok getter won't work with import static
     public static Logger logger() {
         return logger;
-    }
-
-    public static Vertx vertx() {
-        return vertxInstance;
     }
 
     // private static final List<String> allowedExtensions = Arrays.asList("doc", "docx", "odt", "pdf", "txt", "rtf");
@@ -64,8 +59,6 @@ public class SpeechDropApplication extends AbstractVerticle {
     String aboutPage;
 
     public SpeechDropApplication(String mainPage, String roomTemplate, String aboutPage) {
-        vertxInstance = getVertx();
-
         // Initialize logging
         logger = Logger.getLogger("SpeechDrop");
         logger.setUseParentHandlers(false);

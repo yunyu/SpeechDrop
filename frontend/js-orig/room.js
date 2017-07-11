@@ -39,14 +39,12 @@ var uploadedFiles = new Vue({
             dropzoneElement.className = "dz-clickable";
         }
 
-        var sock = io("https://sock.speechdrop.net/");
-        sock.on("connect", function () {
-            // console.log("Connected");
-            sock.emit("join", roomId);
-            sock.on("update", function (data) {
-                uploadedFiles.fileList = processFileList(JSON.parse(data));
-            })
-        });
+        var eb = new EventBus('/sock');
+        eb.onopen = function () {
+            eb.registerHandler("speechdrop.room." + roomId, function (e, m) {
+                uploadedFiles.fileList = processFileList(JSON.parse(m.body));
+            });
+        };
 
         this.$nextTick(function () {
             var dropCard = new Dropzone("div#file-dropzone", {
@@ -60,7 +58,7 @@ var uploadedFiles = new Vue({
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, "Upload successful!");
                     dropCard.element.className += " dropzone-success";
-                    uploadedFiles.fileList = processFileList(JSON.parse(successMsg));
+                    uploadedFiles.fileList = processFileList(successMsg);
                     setTimeout(function () {
                         resetDropzone(dropCard.element);
                     }, 2000);

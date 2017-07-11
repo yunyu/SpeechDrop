@@ -14,6 +14,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -91,9 +92,9 @@ public class SpeechDropApplication {
         ctx.response().setStatusCode(302).putHeader(LOCATION, location).end();
     }
 
-    public void mount(Router router) {
+    public void mount(Router router) throws IOException {
         logger().info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
-        BASE_PATH.mkdir();
+        Files.createDirectories(BASE_PATH.toPath());
         new PurgeTask(roomHandler, vertx).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
@@ -211,7 +212,6 @@ public class SpeechDropApplication {
 
         router.route("/:roomid").method(GET).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
-            logger().info("Hitting " + roomId);
             if (!roomHandler.roomExists(roomId)) {
                 redirect(ctx, "/");
             } else {

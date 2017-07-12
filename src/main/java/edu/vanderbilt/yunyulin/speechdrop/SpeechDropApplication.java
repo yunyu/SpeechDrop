@@ -219,6 +219,11 @@ public class SpeechDropApplication {
             }
         });
 
+        router.route("/:roomid/").method(GET).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
+            redirect(ctx, "/" + roomId);
+        });
+
         String mediaUrl;
         if (config.getBoolean("debugMediaDownloads")) {
             mediaUrl = "/media/";

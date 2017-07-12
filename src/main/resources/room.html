@@ -309,7 +309,7 @@
         <div class="card-wrapper" v-for="fileEntry in fileList" v-bind:key="fileEntry.origPos">
             <article class="card">
                 <div v-on:click.self="deleteFile(fileEntry.origPos)" class="delete-button">&#215;</div>
-                <a v-bind:href="fileEntry.url">
+                <a v-bind:href="fileEntry.url" download>
                 <header class="file-header">
                     <h3>{{ fileEntry.name }}</h3>
                     <div class="file-date">{{ fileEntry.formattedDate }}</div>

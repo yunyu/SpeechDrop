@@ -23,10 +23,10 @@ var codeInput = new Vue({
                 this.hint = charRemaining(val);
             } else {
                 this.hint = "Checking...";
-                var http = new XMLHttpRequest();
-                http.open('GET', window.location.href + val + "/index");
-                http.onloadend = function () {
-                    if (http.status !== 200) {
+                var r = new XMLHttpRequest();
+                r.open('GET', "/" + val + "/index", true);
+                r.onload = function () {
+                    if (this.status !== 200) {
                         codeInput.codeInputClass = "input-invalid";
                         codeInput.hint = '<span style="color:#b72a2a">Invalid room code</span>';
                     } else {
@@ -34,7 +34,7 @@ var codeInput = new Vue({
                         codeInput.hint = "Taking you there...";
                     }
                 };
-                http.send();
+                r.send();
             }
         }
     }

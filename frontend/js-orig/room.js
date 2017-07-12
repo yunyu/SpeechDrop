@@ -22,7 +22,17 @@ function processFileList(newList) {
     return processed;
 }
 
-var csrfToken = Cookies.get('XSRF-TOKEN');
+function getCsrfToken() {
+    return Cookies.get('XSRF-TOKEN');
+}
+
+// Session keepalive
+setInterval(function () {
+    var r = new XMLHttpRequest();
+    r.open("GET", "/" + roomId + "/index", true);
+    r.send();
+}, 600000);
+
 var uploadedFiles = new Vue({
     el: '#room-container',
     data: {
@@ -82,7 +92,7 @@ var uploadedFiles = new Vue({
                     }, 2000);
                 },
                 sending: function (file, xhr, formData) {
-                    formData.append("X-XSRF-TOKEN", csrfToken);
+                    formData.append("X-XSRF-TOKEN", getCsrfToken());
                     ga('send', 'event', 'Room', 'upload', roomId);
                 },
                 createImageThumbnails: false,
@@ -103,13 +113,12 @@ var uploadedFiles = new Vue({
                     break;
                 }
             }
-            r.onreadystatechange = function () {
-                if (r.readyState !== 4 || r.status !== 200) return;
-                processFileList(JSON.parse(r.responseText));
+            r.onload = function () {
+                processFileList(JSON.parse(r.response));
             };
             var data = "fileIndex=" + fileIndex;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            r.setRequestHeader('X-XSRF-TOKEN', csrfToken);
+            r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
         }

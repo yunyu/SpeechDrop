@@ -26,7 +26,7 @@ function getCsrfToken() {
     return Cookies.get('XSRF-TOKEN');
 }
 
-// Session keepalive
+// Token refresh
 setInterval(function () {
     var r = new XMLHttpRequest();
     r.open("GET", "/" + roomId + "/index", true);

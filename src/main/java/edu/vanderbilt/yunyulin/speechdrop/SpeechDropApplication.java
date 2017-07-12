@@ -101,7 +101,7 @@ public class SpeechDropApplication {
         router.route().handler(CookieHandler.create());
         router.route().handler(SessionHandler.create(
                 LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
-        ).setSessionTimeout(48 * 60 * 60 * 1000));
+        ).setSessionTimeout(6 * 60 * 60 * 1000));
         router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->

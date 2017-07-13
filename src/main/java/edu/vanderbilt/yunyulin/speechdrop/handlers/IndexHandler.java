@@ -76,13 +76,17 @@ public class IndexHandler {
         checkLoad();
         logger().info("[" + uploadDirectory.getName() + "] Processing delete for index "
                 + index);
+        String completedIndex;
         if (entries.get(index) != null) {
             entries.set(index, null);
-            indexHandler.handle(writeIndex());
+            completedIndex = writeIndex();
             vertx.fileSystem().deleteRecursive(
                     new File(uploadDirectory, Integer.toString(index)).getPath(), true, null
             );
+        } else {
+            completedIndex = getIndexString();
         }
+        indexHandler.handle(completedIndex);
     }
 
     public Collection<File> getFiles() {

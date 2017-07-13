@@ -18,7 +18,7 @@ public class Room {
     @Getter
     private final RoomData data;
 
-    private final Deque<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>(2);
+    private final Queue<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>(2);
     private IndexHandler indexHandler;
 
     public Room(Vertx vertx, String id, RoomData data) {
@@ -28,7 +28,7 @@ public class Room {
         new IndexHandler(vertx, new File(SpeechDropApplication.BASE_PATH, id)).load(loadedIndex -> {
             this.indexHandler = loadedIndex;
             while (!queuedOperations.isEmpty()) {
-                queuedOperations.pop().handle(loadedIndex);
+                queuedOperations.poll().handle(loadedIndex);
             }
         });
     }
@@ -37,7 +37,7 @@ public class Room {
         if (indexHandler != null) {
             operation.handle(indexHandler);
         } else {
-            queuedOperations.push(operation);
+            queuedOperations.offer(operation);
         }
     }
 

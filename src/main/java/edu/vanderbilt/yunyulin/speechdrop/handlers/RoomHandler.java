@@ -2,6 +2,9 @@ package edu.vanderbilt.yunyulin.speechdrop.handlers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
@@ -16,6 +19,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
 
@@ -30,6 +34,7 @@ public class RoomHandler {
     private File roomsFile;
 
     private final Vertx vertx;
+    private final LoadingCache<String, Room> roomCache;
 
     public RoomHandler(Vertx vertx) {
         this.vertx = vertx;
@@ -44,6 +49,15 @@ public class RoomHandler {
                 e.printStackTrace();
             }
         }
+        roomCache = CacheBuilder.newBuilder()
+                .maximumSize(1000)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, Room>() {
+                    @Override
+                    public Room load(String key) throws Exception {
+                        return new Room(vertx, key, dataStore.get(key));
+                    }
+                });
     }
 
     private String nextSessionId() {
@@ -71,7 +85,7 @@ public class RoomHandler {
     }
 
     public Room getRoom(String id) {
-        return new Room(vertx, id, dataStore.get(id));
+        return roomCache.getUnchecked(id);
     }
 
     private void writeRooms() {
@@ -86,7 +100,7 @@ public class RoomHandler {
         if (dataStore.remove(id) == null) {
             return false;
         }
-
+        roomCache.invalidate(id);
         File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
         vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, res -> writeRooms());
         return true;

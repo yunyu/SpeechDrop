@@ -10,7 +10,6 @@ import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.impl.Utils;
 import lombok.Getter;
 
 import java.io.File;
@@ -43,7 +42,7 @@ public class RoomHandler {
             dataStore = new HashMap<>();
         } else {
             try {
-                dataStore = mapper.readValue(Utils.readFileToString(vertx, roomsFile.getPath()),
+                dataStore = mapper.readValue(vertx.fileSystem().readFileBlocking(roomsFile.getPath()).toString(),
                         mapper.getTypeFactory().constructMapType(HashMap.class, String.class, RoomData.class));
             } catch (IOException e) {
                 e.printStackTrace();

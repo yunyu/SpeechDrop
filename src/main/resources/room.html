@@ -12,7 +12,7 @@
         ga('create', 'UA-102278933-1', 'auto');
         ga('send', 'pageview');
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.4/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.1/vue.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/min/dropzone.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.1.4/js.cookie.min.js"></script>
@@ -218,33 +218,33 @@
         }
     }
 
-    .grid-entries-enter-active, .grid-entries-leave-active {
-        transition: all 0.5s;
+    .grid-entries-enter-to, .grid-entries-leave-active > .card {
+        transition: all 0.2s;
     }
 
-    .grid-entries-enter, .grid-entries-leave-active > .card {
+    .grid-entries-enter, .grid-entries-leave-to > .card {
         opacity: 0;
         transform: scale(0.25, 0.25);
     }
 
     .grid-entries-leave-active {
         position: absolute;
-        z-index: -1
-    }
-
-    .grid-entries-leave-active > .card {
-        transition: all 0.2s;
+        z-index: -1;
     }
 
     .grid-entries-move {
         transition: transform 0.5s ease-in-out;
     }
 
-    .fade-enter-active, .fade-leave-active {
+    .fade-enter-active {
         transition: opacity .5s;
     }
 
-    .fade-enter, .fade-leave-active {
+    .fade-leave-active  {
+        transition: opacity 0.2s;
+    }
+
+    .fade-enter, .fade-leave-to {
         opacity: 0;
     }
 

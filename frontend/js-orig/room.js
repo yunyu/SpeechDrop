@@ -41,12 +41,13 @@ var uploadedFiles = new Vue({
     mounted: function () {
         ga('send', 'event', 'Room', 'join', roomId);
 
-        var eb = new EventBus('/sock', {vertxbus_reconnect_interval: 3000});
+        var eb = new EventBus('/sock');
         eb.onopen = function () {
             eb.registerHandler("speechdrop.room." + roomId, function (e, m) {
                 uploadedFiles.fileList = processFileList(JSON.parse(m.body));
             });
         };
+        eb.reconnectEnabled(true);
 
         function setUploadText(dropzoneElement, text) {
             dropzoneElement.getElementsByTagName("p")[0].innerHTML = text;

@@ -47,7 +47,7 @@ var uploadedFiles = new Vue({
                 uploadedFiles.fileList = processFileList(JSON.parse(m.body));
             });
         };
-        eb.reconnectEnabled(true);
+        eb.enableReconnect(true);
 
         function setUploadText(dropzoneElement, text) {
             dropzoneElement.getElementsByTagName("p")[0].innerHTML = text;

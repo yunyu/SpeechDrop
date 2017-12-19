@@ -2,12 +2,10 @@ package edu.vanderbilt.yunyulin.speechdrop;
 
 import io.vertx.core.buffer.Buffer;
 
-import java.io.*;
-import java.nio.file.FileVisitResult;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

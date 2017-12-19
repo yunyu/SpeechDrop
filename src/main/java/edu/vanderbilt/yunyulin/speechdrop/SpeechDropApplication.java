@@ -240,15 +240,13 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar -> {
-                    ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
-                            .end(roomTemplate
-                                    .replace("{% MEDIA_URL %}", mediaUrl)
-                                    .replace("{% INDEX %}", ar.result())
-                                    .replace("{% ROOM %}", r.getId())
-                                    .replace("{% NAME %}",
-                                            HtmlEscapers.htmlEscaper().escape(r.getData().name)));
-                });
+                r.getIndex().setHandler(ar -> ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
+                        .end(roomTemplate
+                                .replace("{% MEDIA_URL %}", mediaUrl)
+                                .replace("{% INDEX %}", ar.result())
+                                .replace("{% ROOM %}", r.getId())
+                                .replace("{% NAME %}",
+                                        HtmlEscapers.htmlEscaper().escape(r.getData().name))));
             }
         });
     }

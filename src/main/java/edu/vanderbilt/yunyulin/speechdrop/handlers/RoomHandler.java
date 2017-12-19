@@ -53,7 +53,7 @@ public class RoomHandler {
                 .expireAfterAccess(30, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, Room>() {
                     @Override
-                    public Room load(String key) throws Exception {
+                    public Room load(String key) {
                         return new Room(vertx, key, dataStore.get(key));
                     }
                 });

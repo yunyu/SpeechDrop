@@ -41,7 +41,7 @@ public class SpeechDropApplication {
     public static final List<String> allowedMimeTypes = Arrays.asList(
             "application/msword", // doc
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // docx
-            "application/vnd.ms-word.document.macroEnabled.12", //macro-enbaled doc
+            "application/vnd.ms-word.document.macroEnabled.12", //macro-enabled doc
             "application/vnd.oasis.opendocument.text", // odt
             "application/x-iwork-pages-sffpages", // pages
             "application/pdf", // pdf

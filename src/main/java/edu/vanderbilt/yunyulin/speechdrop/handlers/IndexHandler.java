@@ -34,23 +34,21 @@ public class IndexHandler {
     private boolean loaded = false;
 
     public void load(Handler<IndexHandler> onComplete) {
-        if (!indexFile.exists()) {
-            loaded = true;
-            entries = new ArrayList<>();
-            onComplete.handle(this);
-        } else {
-            vertx.fileSystem().readFile(indexFile.getPath(), res -> {
+        vertx.fileSystem().readFile(indexFile.getPath(), res -> {
+            if (res.succeeded()) {
                 try {
                     entries = new ArrayList<>(Arrays.asList(
                             mapper.readValue(res.result().toString(), FileEntry[].class)
                     ));
-                    loaded = true;
-                    onComplete.handle(this);
                 } catch (IOException e) { // This should never happen
                     e.printStackTrace();
                 }
-            });
-        }
+            } else {
+                entries = new ArrayList<>();
+            }
+            loaded = true;
+            onComplete.handle(this);
+        });
     }
 
     public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {

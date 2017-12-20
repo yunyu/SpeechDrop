@@ -57,6 +57,6 @@ public class Broadcaster {
     }
 
     public void publishUpdate(String room, String data) {
-        vertx.setTimer(50, id -> vertx.eventBus().publish(ADDR_PREFIX + room, data));
+        vertx.eventBus().publish(ADDR_PREFIX + room, data);
     }
 }

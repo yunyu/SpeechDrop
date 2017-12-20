@@ -172,6 +172,6 @@
         </div>
     </article>
 </div>
-<script>var maxChars=6,charRemaining=function(n){var t=maxChars-n.length;return t+" character"+(1!==t?"s":"")+" left"},codeInput=new Vue({el:"#app",data:{code:"",hint:charRemaining(""),codeInputClass:null,csrfToken:Cookies.get("XSRF-TOKEN")},watch:{code:function(n){this.produceHint(n)}},methods:{produceHint:function(n){if(n.length<maxChars)this.codeInputClass=null,this.hint=charRemaining(n);else{this.hint="Checking...";var t=new XMLHttpRequest;t.open("GET","/"+n+"/index",!0),t.onload=function(){200!==this.status?(codeInput.codeInputClass="input-invalid",codeInput.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=n,codeInput.hint="Taking you there...")},t.send()}}}});</script>
+<script>var maxChars=6,charRemaining=function(n){var t=maxChars-n.length;return t+" character"+(1!==t?"s":"")+" left"};new Vue({el:"#app",data:{code:"",hint:charRemaining(""),codeInputClass:null,csrfToken:Cookies.get("XSRF-TOKEN")},watch:{code:function(n){this.produceHint(n)}},methods:{produceHint:function(n){var t=this;if(n.length<maxChars)this.codeInputClass=null,this.hint=charRemaining(n);else{this.hint="Checking...";var e=new XMLHttpRequest;e.open("GET","/"+n+"/index",!0),e.onload=function(){200!==e.status?(t.codeInputClass="input-invalid",t.hint='<span style="color:#b72a2a">Invalid room code</span>'):(window.location.href+=n,t.hint="Taking you there...")},e.send()}}}});</script>
 </body>
 </html>

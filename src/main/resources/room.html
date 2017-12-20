@@ -45,7 +45,7 @@
     .card {
         box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
         border: none;
-        margin-bottom: 0px;
+        margin-bottom: 0;
     }
 
     .card-button-container {
@@ -98,6 +98,7 @@
 
     #file-grid {
         padding: 5px;
+        position: relative;
     }
 
     #file-dropzone {
@@ -218,11 +219,11 @@
         }
     }
 
-    .grid-entries-enter-to, .grid-entries-leave-active > .card {
+    .grid-entries-enter-active, .grid-entries-leave-active {
         transition: all 0.2s;
     }
 
-    .grid-entries-enter, .grid-entries-leave-to > .card {
+    .grid-entries-enter, .grid-entries-leave-active > .card {
         opacity: 0;
         transform: scale(0.25, 0.25);
     }
@@ -237,7 +238,7 @@
     }
 
     .fade-enter-active {
-        transition: opacity .5s;
+        transition: opacity 0.5s;
     }
 
     .fade-leave-active  {
@@ -324,6 +325,6 @@
     </transition-group>
 </div>
 <script>var mediaUrl="{% MEDIA_URL %}",roomId="{% ROOM %}",allowedMimes="{% ALLOWED_MIMES %}",initialFiles={% INDEX %};
-function formatDate(e){var o=new Date(e),n=o.getHours(),t=o.getMinutes(),i=12>n?"am":"pm";return n%=12,n=n?n:12,t=10>t?"0"+t:t,n+":"+t+" "+i}function processFileList(e){for(var o=[],n=0;n<e.length;n++){var t=e[n];t&&(t.url=mediaUrl+roomId+"/"+n+"/"+t.name,t.origPos=n,t.formattedDate=formatDate(t.ctime),o.unshift(t))}return o}function getCsrfToken(){return Cookies.get("XSRF-TOKEN")}setInterval(function(){var e=new XMLHttpRequest;e.open("GET","/"+roomId+"/index",!0),e.send()},6e5);var uploadedFiles=new Vue({el:"#room-container",data:{fileList:processFileList(initialFiles)},mounted:function(){function e(e,o){e.getElementsByTagName("p")[0].innerHTML=o}function o(o){e(o,"Drag files here or click to upload"),o.className="dz-clickable"}ga("send","event","Room","join",roomId);var n=new EventBus("/sock");n.onopen=function(){n.registerHandler("speechdrop.room."+roomId,function(e,o){uploadedFiles.fileList=processFileList(JSON.parse(o.body))})},n.enableReconnect(!0),this.$nextTick(function(){var n=new Dropzone("div#file-dropzone",{url:"/"+roomId+"/upload",addedfile:function(){},uploadprogress:function(o,t){e(n.element,"Uploading ("+Math.floor(t)+"%)")},success:function(t,i){o(n.element),e(n.element,"Upload successful!"),n.element.className+=" dropzone-success",uploadedFiles.fileList=processFileList(i),setTimeout(function(){o(n.element)},2e3)},error:function(t,i){o(n.element),e(n.element,"Upload failed, please retry."),n.element.className+=" dropzone-fail",console.log(i),setTimeout(function(){o(n.element)},2e3)},sending:function(e,o,n){n.append("X-XSRF-TOKEN",getCsrfToken()),ga("send","event","Room","upload",roomId)},createImageThumbnails:!1,maxFilesize:5,uploadMultiple:!1,acceptedFiles:allowedMimes});o(n.element)})},methods:{deleteFile:function(e){var o=new XMLHttpRequest;o.open("POST","/"+roomId+"/delete",!0);for(var n=0;n<uploadedFiles.fileList.length;n++)if(uploadedFiles.fileList[n].origPos===e){uploadedFiles.fileList.splice(n,1);break}o.onload=function(){processFileList(JSON.parse(o.response))};var t="fileIndex="+e;o.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),o.setRequestHeader("X-XSRF-TOKEN",getCsrfToken()),o.send(t),ga("send","event","Room","delete",roomId)}}});</script>
+new Vue({el:"#room-container",data:{files:initialFiles},mounted:function(){function e(e,n){e.getElementsByTagName("p")[0].innerHTML=n}function n(n){e(n,"Drag files here or click to upload"),n.className="dz-clickable"}var o=this;ga("send","event","Room","join",roomId);var t=!1;setInterval(function(){var e=new XMLHttpRequest;e.open("GET","/"+roomId+"/index",!0),e.send()},6e5);var i=new EventBus("/sock");i.onopen=function(){i.registerHandler("speechdrop.room."+roomId,function(e,n){t?t=!1:o.files=JSON.parse(n.body)})},i.enableReconnect(!0),o.$nextTick(function(){var i=new Dropzone("div#file-dropzone",{url:"/"+roomId+"/upload",addedfile:function(e){},uploadprogress:function(n,o,t){e(i.element,"Uploading ("+Math.floor(o)+"%)")},success:function(s,l){n(i.element),e(i.element,"Upload successful!"),i.element.className+=" dropzone-success",t=!0,o.files=l,setTimeout(function(){t=!1},300),setTimeout(function(){n(i.element)},2e3)},error:function(o,t){n(i.element),e(i.element,"Upload failed, please retry."),i.element.className+=" dropzone-fail",console.log(t),setTimeout(function(){n(i.element)},2e3)},sending:function(e,n,t){t.append("X-XSRF-TOKEN",o.getCsrfToken()),ga("send","event","Room","upload",roomId)},createImageThumbnails:!1,maxFilesize:5,uploadMultiple:!1,acceptedFiles:allowedMimes});n(i.element)})},methods:{deleteFile:function(e){var n=this,o=new XMLHttpRequest;o.open("POST","/"+roomId+"/delete",!0);for(var t=0;t<n.fileList.length;t++)if(n.fileList[t].origPos===e){n.files.splice(t,1);break}o.onload=function(){n.files=JSON.parse(o.response)};var i="fileIndex="+e;o.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),o.setRequestHeader("X-XSRF-TOKEN",n.getCsrfToken()),o.send(i),ga("send","event","Room","delete",roomId)},getCsrfToken:function(){return Cookies.get("XSRF-TOKEN")}},computed:{fileList:function(){for(var e=[],n=0;n<this.files.length;n++){var o=this.files[n];o&&(o.url=mediaUrl+roomId+"/"+n+"/"+o.name,o.origPos=n,o.formattedDate=function(e){var n=new Date(e),o=n.getHours(),t=n.getMinutes(),i=o>=12?"pm":"am";return o%=12,o=o||12,t=t<10?"0"+t:t,o+":"+t+" "+i}(o.ctime),e.unshift(o))}return e}}});</script>
 </body>
 </html>

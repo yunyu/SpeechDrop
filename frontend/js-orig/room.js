@@ -75,12 +75,7 @@ new Vue({
         deleteFile(fileIndex) {
             const r = new XMLHttpRequest();
             r.open("POST", `/${roomId}/delete`, true);
-            /* for (let i = 0; i < this.fileList.length; i++) {
-                if (this.fileList[i].origPos === fileIndex) {
-                    this.files.splice(i, 1);
-                    break;
-                }
-            } */
+            this.$set(this.files, fileIndex, null);
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());

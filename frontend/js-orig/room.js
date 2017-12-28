@@ -9,8 +9,7 @@ new Vue({
     },
     mounted() {
         ga('send', 'event', 'Room', 'join', roomId);
-        // Nasty workaround for https://github.com/vuejs/vue/issues/5800
-        let lastAdd = -1;
+        this.lastApiResult = null;
 
         // Token refresh
         setInterval(() => {
@@ -22,15 +21,10 @@ new Vue({
         const eb = new EventBus('/sock');
         eb.onopen = () => {
             eb.registerHandler(`speechdrop.room.${roomId}`, (e, m) => {
-                this.$nextTick(() => {
-                    const updateFiles = () => this.files = JSON.parse(m.body);
-                    const deltaT = Date.now() - lastAdd;
-                    if (lastAdd > -1 && deltaT < 540) {
-                        setTimeout(updateFiles, 540 - deltaT);
-                    } else {
-                        updateFiles();
-                    }
-                });
+                if (m.body !== this.lastApiResult) {
+                    this.files = JSON.parse(m.body);
+                }
+                this.lastApiResult = null;
             });
         };
         eb.enableReconnect(true);
@@ -56,7 +50,8 @@ new Vue({
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, "Upload successful!");
                     dropCard.element.className += " dropzone-success";
-                    lastAdd = Date.now();
+                    // Nasty workaround for https://github.com/vuejs/vue/issues/5800
+                    this.lastApiResult = JSON.stringify(successMsg);
                     this.files = successMsg;
                     setTimeout(() => {
                         resetDropzone(dropCard.element);
@@ -91,7 +86,10 @@ new Vue({
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
-            r.onload = () => this.files = JSON.parse(r.response);
+            r.onload = () => {
+                this.lastApiResult = r.response;
+                this.files = JSON.parse(r.response);
+            };
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
         }

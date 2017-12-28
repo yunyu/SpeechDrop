@@ -9,6 +9,8 @@ new Vue({
     },
     mounted() {
         ga('send', 'event', 'Room', 'join', roomId);
+        // Nasty workaround for https://github.com/vuejs/vue/issues/5800
+        let lastAdd = -1;
 
         // Token refresh
         setInterval(() => {
@@ -20,7 +22,15 @@ new Vue({
         const eb = new EventBus('/sock');
         eb.onopen = () => {
             eb.registerHandler(`speechdrop.room.${roomId}`, (e, m) => {
-                this.files = JSON.parse(m.body);
+                this.$nextTick(() => {
+                    const updateFiles = () => this.files = JSON.parse(m.body);
+                    const deltaT = Date.now() - lastAdd;
+                    if (lastAdd > -1 && deltaT < 540) {
+                        setTimeout(updateFiles, 540 - deltaT);
+                    } else {
+                        updateFiles();
+                    }
+                });
             });
         };
         eb.enableReconnect(true);
@@ -42,10 +52,12 @@ new Vue({
                 uploadprogress(file, progress, bytes) {
                     setUploadText(dropCard.element, `Uploading (${Math.floor(progress)}%)`);
                 },
-                success(file, successMsg) {
+                success: (file, successMsg) => {
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, "Upload successful!");
                     dropCard.element.className += " dropzone-success";
+                    lastAdd = Date.now();
+                    this.files = successMsg;
                     setTimeout(() => {
                         resetDropzone(dropCard.element);
                     }, 2000);
@@ -79,6 +91,7 @@ new Vue({
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
+            r.onload = () => this.files = JSON.parse(r.response);
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
         }

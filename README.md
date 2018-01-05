@@ -24,8 +24,3 @@ Production setup
 8. Copy JAR to destination directory and switch to it
 9. Run `java -Dfile.encoding=UTF-8 -jar SpeechDrop-1.0-SNAPSHOT.jar -conf config.json`
 10. Visit site
-
-To fix
---
-
-The JS minification is literally copy pasting at the moment, should be fixed.

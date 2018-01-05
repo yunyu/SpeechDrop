@@ -4,10 +4,10 @@ import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.bridge.BridgeEventType;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.sockjs.BridgeEventType;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
 public class Broadcaster {
@@ -52,8 +52,8 @@ public class Broadcaster {
         }
     }
 
-    public void mount(Router router) {
-        router.route("/sock/*").handler(sockJSHandler);
+    public SockJSHandler getSockJSHandler() {
+        return sockJSHandler;
     }
 
     public void publishUpdate(String room, String data) {

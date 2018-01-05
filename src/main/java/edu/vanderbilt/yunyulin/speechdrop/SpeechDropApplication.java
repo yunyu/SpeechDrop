@@ -98,6 +98,7 @@ public class SpeechDropApplication {
         Files.createDirectories(BASE_PATH.toPath());
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
+        router.route("/sock/*").handler(broadcaster.getSockJSHandler());
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
         router.route().handler(CookieHandler.create());
         router.route().handler(SessionHandler.create(
@@ -108,8 +109,6 @@ public class SpeechDropApplication {
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
-
-        broadcaster.mount(router);
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 

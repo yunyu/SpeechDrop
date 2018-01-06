@@ -98,17 +98,18 @@ public class SpeechDropApplication {
         Files.createDirectories(BASE_PATH.toPath());
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
+        router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
         router.route().handler(CookieHandler.create());
         router.route().handler(SessionHandler.create(
                 LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
         ).setSessionTimeout(6 * 60 * 60 * 1000));
         router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
-        router.route("/sock/*").handler(broadcaster.getSockJSHandler());
-        router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
+
+        router.route("/sock/*").handler(broadcaster.getSockJSHandler());
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 

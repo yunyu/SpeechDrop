@@ -11,6 +11,6 @@
 		"uglifyjs-folder": "^1.5.0"
 	},
 	"scripts": {
-		"build": "rimraf dist/ && babel src/js/ -d dist/static/js/ && uglifyjs-folder dist/static/js/ -eo dist/static/js/ -x .js && node-sass --output-style compressed src/scss/ -o dist/static/css"
+		"build": "rimraf dist/ && babel src/js/ -d dist/static/js/ && uglifyjs-folder dist/static/js/ -eo dist/static/js/ -x .js && node-sass --output-style compressed src/scss/ -o dist/static/css/"
 	}
 }

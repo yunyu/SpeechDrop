@@ -32,7 +32,7 @@ new Vue({
                         this.codeInputClass = "input-invalid";
                         this.hint = '<span style="color:#b72a2a">Invalid room code</span>';
                     } else {
-                        window.location.href += val;
+                        window.location.href = `/${val}`;
                         this.hint = "Taking you there...";
                     }
                 };

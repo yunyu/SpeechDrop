@@ -2,12 +2,13 @@ package edu.vanderbilt.yunyulin.speechdrop;
 
 import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
-import edu.vanderbilt.yunyulin.speechdrop.logging.ConciseFormatter;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
@@ -19,8 +20,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Logger;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static io.vertx.core.http.HttpHeaders.LOCATION;
@@ -30,12 +29,7 @@ import static io.vertx.core.http.HttpMethod.POST;
 public class SpeechDropApplication {
     private static final String EMPTY_INDEX = "[]";
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
-    private static Logger logger;
-
-    // Lombok getter won't work with import static
-    public static Logger logger() {
-        return logger;
-    }
+    public static final Logger LOGGER = LoggerFactory.getLogger(SpeechDropApplication.class.getName());
 
     // private static final List<String> allowedExtensions = Arrays.asList("doc", "docx", "odt", "pdf", "txt", "rtf");
     public static final List<String> allowedMimeTypes = Arrays.asList(
@@ -68,13 +62,6 @@ public class SpeechDropApplication {
         this.vertx = vertx;
         this.config = config;
 
-        // Initialize logging
-        logger = Logger.getLogger("SpeechDrop");
-        logger.setUseParentHandlers(false);
-        ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(new ConciseFormatter());
-        logger.addHandler(consoleHandler);
-
         // Initialize rooms
         roomHandler = new RoomHandler(vertx);
         broadcaster = new Broadcaster(vertx, roomHandler);
@@ -94,7 +81,7 @@ public class SpeechDropApplication {
     }
 
     public void mount(Router router) throws IOException {
-        logger().info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
+        LOGGER.info("Starting SpeechDrop (" + SpeechDropVerticle.VERSION + ")");
         Files.createDirectories(BASE_PATH.toPath());
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
@@ -185,7 +172,7 @@ public class SpeechDropApplication {
         router.route("/:roomid/upload").method(POST).produces(APPLICATION_JSON_PRODUCES).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                logger().warning("(Upload) Nonexist " + roomId);
+                LOGGER.warn("(Upload) Nonexist " + roomId);
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
@@ -206,7 +193,7 @@ public class SpeechDropApplication {
         router.route("/:roomid/delete").method(POST).produces(APPLICATION_JSON_PRODUCES).handler(ctx -> {
             String roomId = ctx.request().getParam("roomid");
             if (!roomHandler.roomExists(roomId)) {
-                logger().warning("(Upload) Nonexist " + roomId);
+                LOGGER.warn("(Upload) Nonexist " + roomId);
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);

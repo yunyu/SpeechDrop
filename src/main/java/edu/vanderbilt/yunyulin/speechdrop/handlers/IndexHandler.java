@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 @Data
 public class IndexHandler {
@@ -53,7 +53,7 @@ public class IndexHandler {
 
     public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
         checkLoad();
-        logger().info("[" + uploadDirectory.getName() + "] Processing upload "
+        LOGGER.info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
         vertx.fileSystem().mkdir(uploadDirectory.getPath(), uploadDirRes -> {
@@ -72,7 +72,7 @@ public class IndexHandler {
 
     public void deleteFile(int index, Handler<String> indexHandler) {
         checkLoad();
-        logger().info("[" + uploadDirectory.getName() + "] Processing delete for index "
+        LOGGER.info("[" + uploadDirectory.getName() + "] Processing delete for index "
                 + index);
         String completedIndex;
         if (entries.get(index) != null) {

@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 public class RoomHandler {
     private static final char[] allowedChars =
@@ -78,7 +78,7 @@ public class RoomHandler {
             newId = nextSessionId();
         }
         dataStore.put(newId, new RoomData(name, System.currentTimeMillis()));
-        logger().info("[" + newId + "] Created room with name " + name);
+        LOGGER.info("[" + newId + "] Created room with name " + name);
         writeRooms();
         return getRoom(newId);
     }

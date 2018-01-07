@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.logger;
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 @AllArgsConstructor
 public class PurgeTask {
@@ -26,7 +26,7 @@ public class PurgeTask {
                 }
             });
             toRemove.forEach(roomHandler::deleteRoom);
-            logger().info("Purged " + toRemove.size() + " rooms");
+            LOGGER.info("Purged " + toRemove.size() + " rooms");
         };
         vertx.setPeriodic(3 * 60 * 60 * 1000, runPurge);
         runPurge.handle(0L);

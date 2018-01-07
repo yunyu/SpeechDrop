@@ -9,7 +9,6 @@ new Vue({
     },
     mounted() {
         ga('send', 'event', 'Room', 'join', roomId);
-        this.lastApiResult = null;
 
         // Token refresh
         setInterval(() => {
@@ -20,12 +19,7 @@ new Vue({
 
         const eb = new EventBus('/sock');
         eb.onopen = () => {
-            eb.registerHandler(`speechdrop.room.${roomId}`, (e, m) => {
-                if (m.body !== this.lastApiResult) {
-                    this.files = JSON.parse(m.body);
-                }
-                this.lastApiResult = null;
-            });
+            eb.registerHandler(`speechdrop.room.${roomId}`, (e, m) => this.updateFiles(m.body));
         };
         eb.enableReconnect(true);
 
@@ -50,9 +44,7 @@ new Vue({
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, "Upload successful!");
                     dropCard.element.className += " dropzone-success";
-                    // Nasty workaround for https://github.com/vuejs/vue/issues/5800
-                    this.lastApiResult = JSON.stringify(successMsg);
-                    this.files = successMsg;
+                    this.updateFiles(JSON.stringify(successMsg));
                     setTimeout(() => {
                         resetDropzone(dropCard.element);
                     }, 2000);
@@ -86,12 +78,16 @@ new Vue({
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
-            r.onload = () => {
-                this.lastApiResult = r.response;
-                this.files = JSON.parse(r.response);
-            };
+            r.onload = () => this.updateFiles(r.response);
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
+        },
+        // Nasty workaround for https://github.com/vuejs/vue/issues/5800
+        updateFiles(filesJson) {
+            if (this.prevFilesJson !== filesJson) {
+                this.prevFilesJson = filesJson;
+                this.files = JSON.parse(filesJson);
+            }
         }
     },
     computed: {

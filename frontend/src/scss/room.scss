@@ -7,7 +7,9 @@ body {
     display: none;
 }
 
-nav .brand, h3, .file-date {
+nav .brand,
+h3,
+.file-date {
     font-weight: 600;
 }
 
@@ -20,7 +22,8 @@ nav .brand, h3, .file-date {
 }
 
 .card {
-    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1),
+        0 0 0 1px rgba(10, 10, 10, 0.05);
     border: none;
     margin-bottom: 0;
 }
@@ -46,7 +49,7 @@ nav .brand, h3, .file-date {
 
 .file-header {
     height: 149px;
-    background: url("/static/img/doc-bg.svg") no-repeat right bottom;
+    background: url('/static/img/doc-bg.svg') no-repeat right bottom;
     background-size: 100px 95px;
 }
 
@@ -88,7 +91,8 @@ nav .brand, h3, .file-date {
     cursor: pointer;
 }
 
-#file-dropzone:hover, #file-dropzone:focus {
+#file-dropzone:hover,
+#file-dropzone:focus {
     box-shadow: inset 0 0 0 99em rgba(255, 255, 255, 0.2);
 }
 
@@ -97,7 +101,7 @@ nav .brand, h3, .file-date {
 }
 
 #upload-text {
-    margin-top: .2em;
+    margin-top: 0.2em;
 }
 
 .dropzone-success {
@@ -144,10 +148,11 @@ nav .brand, h3, .file-date {
 }
 
 .container [data-tooltip]:after {
-    font-size: .75em;
+    font-size: 0.75em;
 }
 
-.container .tooltip-left:after, .container .tooltip-left:before {
+.container .tooltip-left:after,
+.container .tooltip-left:before {
     margin-top: 5px;
 }
 
@@ -178,12 +183,13 @@ nav .brand, h3, .file-date {
         margin: 0 5px -5px 5px;
     }
 
-    .room-name, .room-code {
+    .room-name,
+    .room-code {
         font-size: 1em;
     }
 
     .download-all-button {
-        padding: 0 .5em;
+        padding: 0 0.5em;
     }
 
     .header-button-img {
@@ -191,16 +197,19 @@ nav .brand, h3, .file-date {
         height: 0.75em;
     }
 
-    .container .tooltip-left:after, .container .tooltip-left:before {
+    .container .tooltip-left:after,
+    .container .tooltip-left:before {
         margin-top: 0;
     }
 }
 
-.grid-entries-enter-active, .grid-entries-leave-active {
+.grid-entries-enter-active,
+.grid-entries-leave-active {
     transition: all 0.2s;
 }
 
-.grid-entries-enter, .grid-entries-leave-active > .card {
+.grid-entries-enter,
+.grid-entries-leave-active > .card {
     opacity: 0;
     transform: scale(0.25, 0.25);
 }
@@ -223,7 +232,8 @@ nav .brand, h3, .file-date {
     transition: opacity 0.2s;
 }
 
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
     opacity: 0;
 }
 

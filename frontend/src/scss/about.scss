@@ -4,7 +4,8 @@ body {
     overflow-x: hidden;
 }
 
-nav .brand, h3 {
+nav .brand,
+h3 {
     font-weight: 600;
 }
 
@@ -14,7 +15,8 @@ nav .brand, h3 {
 }
 
 .card {
-    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1),
+        0 0 0 1px rgba(10, 10, 10, 0.05);
     border: none;
     margin-bottom: 2px;
 }

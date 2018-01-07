@@ -1,16 +1,17 @@
 {
-	"name": "speechdrop-frontend",
-	"version": "1.0.0-SNAPSHOT",
-	"author": "Yunyu Lin <yl@vanderbilt.edu>",
-	"license": "MIT",
-	"devDependencies": {
-		"babel-cli": "^6.26.0",
-		"babel-preset-env": "^1.6.1",
-		"node-sass": "^4.7.2",
-		"rimraf": "^2.6.2",
-		"uglifyjs-folder": "^1.5.0"
-	},
-	"scripts": {
-		"build": "rimraf dist/ && babel src/js/ -d dist/static/js/ && uglifyjs-folder dist/static/js/ -eo dist/static/js/ -x .js && node-sass --output-style compressed src/scss/ -o dist/static/css/"
-	}
+    "name": "speechdrop-frontend",
+    "version": "1.0.0-SNAPSHOT",
+    "author": "Yunyu Lin <yl@vanderbilt.edu>",
+    "license": "MIT",
+    "devDependencies": {
+        "babel-cli": "^6.26.0",
+        "babel-preset-env": "^1.6.1",
+        "node-sass": "^4.7.2",
+        "rimraf": "^2.6.2",
+        "uglifyjs-folder": "^1.5.0"
+    },
+    "scripts": {
+        "build":
+            "rimraf dist/ && babel src/js/ -d dist/static/js/ && uglifyjs-folder dist/static/js/ -eo dist/static/js/ -x .js && node-sass --output-style compressed src/scss/ -o dist/static/css/"
+    }
 }

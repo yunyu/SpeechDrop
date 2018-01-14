@@ -1,26 +1,6 @@
-body {
-    background-color: whitesmoke;
-    font-family: 'Open Sans', sans-serif;
-}
-
-[v-cloak] {
-    display: none;
-}
-
-h3 {
-    font-weight: 600;
-}
-
 .container {
     padding: 20px;
     height: 100%;
-}
-
-.card {
-    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1),
-        0 0 0 1px rgba(10, 10, 10, 0.05);
-    border: none;
-    margin-bottom: 2px;
 }
 
 .main-card {

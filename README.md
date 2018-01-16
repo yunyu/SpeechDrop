@@ -6,7 +6,7 @@ Fast, efficient, and secure document sharing for debate rounds.
 Screenshots
 -- 
 ![Home Screen](https://github.com/Jflick58/SpeechDrop/blob/master/Capture.PNG)
-![Document upload and Room view](https://github.com/Jflick58/SpeechDrop/blob/master/Capture2.PNG?raw=true)
+![Document upload and Room view](https://github.com/Jflick58/SpeechDrop/blob/master/Capture2.PNG)
 
 Running locally
 --

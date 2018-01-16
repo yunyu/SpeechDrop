@@ -5,8 +5,8 @@ Fast, efficient, and secure document sharing for debate rounds.
 
 Screenshots
 -- 
-![alt tag](https://github.com/Jflick58/SpeechDrop/blob/master/Capture.PNG)
-![alt tag](https://github.com/Jflick58/Easysentiment/blob/master/res/Easysentiment%201.2.png)
+![Home Screen](https://github.com/Jflick58/SpeechDrop/blob/master/Capture.PNG)
+![Document upload and Room view](https://github.com/Jflick58/SpeechDrop/blob/master/Capture2.PNG?raw=true)
 
 Running locally
 --

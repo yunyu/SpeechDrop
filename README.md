@@ -3,6 +3,13 @@ SpeechDrop
 
 Fast, efficient, and secure document sharing for debate rounds.
 
+Screenshots
+-- 
+
+![Home Screen](https://i.imgur.com/VxTlwsS.png)
+![Document upload and Room view](https://i.imgur.com/2q0zyTc.png)
+
+
 Running locally
 --
 

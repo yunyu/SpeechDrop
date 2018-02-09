@@ -67,9 +67,13 @@ public class SpeechDropApplication {
         broadcaster = new Broadcaster(vertx, roomHandler);
 
         // Initialize templates
-        this.mainPage = mainPage;
-        this.roomTemplate = roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes));
-        this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
+        this.mainPage = replaceCachebusters(mainPage);
+        this.roomTemplate = replaceCachebusters(roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes)));
+        this.aboutPage = replaceCachebusters(aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION));
+    }
+
+    private static String replaceCachebusters(String template) {
+        return template.replace("{% CACHEBUSTER %}", SpeechDropVerticle.GIT_HASH);
     }
 
     private void sendEmptyIndex(RoutingContext ctx, int errCode) {

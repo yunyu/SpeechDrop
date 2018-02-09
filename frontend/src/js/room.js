@@ -1,3 +1,11 @@
+import '../scss/base.scss';
+import '../scss/room.scss';
+
+import Vue from 'vue';
+import Cookies from 'js-cookie';
+import Dropzone from 'dropzone';
+import EventBus from 'vertx3-eventbus-client';
+
 function getCsrfToken() {
     return Cookies.get('XSRF-TOKEN');
 }

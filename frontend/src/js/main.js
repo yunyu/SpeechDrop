@@ -1,3 +1,9 @@
+import '../scss/base.scss';
+import '../scss/main.scss';
+
+import Vue from 'vue';
+import Cookies from 'js-cookie';
+
 const maxChars = 6;
 
 const charRemaining = val => {

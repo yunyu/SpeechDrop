@@ -6,6 +6,8 @@ import Cookies from 'js-cookie';
 import Dropzone from 'dropzone';
 import EventBus from 'vertx3-eventbus-client';
 
+import RoomContainer from './RoomContainer.vue';
+
 function getCsrfToken() {
     return Cookies.get('XSRF-TOKEN');
 }
@@ -14,6 +16,10 @@ new Vue({
     el: '#room-container',
     data: {
         files: initialFiles
+    },
+    beforeMount() {
+        this.roomName = roomName;
+        this.roomId = roomId;
     },
     mounted() {
         ga('send', 'event', 'Room', 'join', roomId);
@@ -135,5 +141,6 @@ new Vue({
             }
             return processed;
         }
-    }
+    },
+    ...RoomContainer
 });

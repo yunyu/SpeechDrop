@@ -4,6 +4,8 @@ import '../scss/main.scss';
 import Vue from 'vue';
 import Cookies from 'js-cookie';
 
+import MainCard from './MainCard.vue';
+
 const maxChars = 6;
 
 const charRemaining = val => {
@@ -46,5 +48,6 @@ new Vue({
                 r.send();
             }
         }
-    }
+    },
+    ...MainCard
 });

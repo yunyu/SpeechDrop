@@ -18,8 +18,15 @@ const config = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['env']
+                        presets: ['env', 'stage-2']
                     }
+                }
+            },
+            {
+                test: /\.vue$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'vue-loader'
                 }
             },
             {
@@ -39,12 +46,7 @@ const config = {
         new ExtractTextPlugin({
             filename: './dist/static/css/[name].css'
         })
-    ],
-    resolve: {
-        alias: {
-            vue$: 'vue/dist/vue.esm.js'
-        }
-    }
+    ]
 };
 
 module.exports = config;

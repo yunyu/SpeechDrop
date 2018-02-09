@@ -10,6 +10,7 @@
         "dropzone": "4.3.0",
         "extract-text-webpack-plugin": "^3.0.2",
         "js-cookie": "2.1.4",
+        "picnic": "6.4.0",
         "sass-loader": "^6.0.6",
         "style-loader": "^0.20.1",
         "vertx3-eventbus-client": "3.5.0",

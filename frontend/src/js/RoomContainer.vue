@@ -2,7 +2,7 @@
     <div class="container">
         <transition name="fade">
             <a v-if="fileList.length > 1" onclick="ga('send', 'event', 'Room', 'archive')"
-                href="/{% ROOM %}/archive" data-tooltip="Download all files" class="button download-all-button tooltip-left"
+                :href="`/${roomId}/archive`" data-tooltip="Download all files" class="button download-all-button tooltip-left"
                 download>
                 <img src="/static/img/download-folder.svg" class="header-button-img"
                     alt="Download icon"/>

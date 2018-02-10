@@ -12,10 +12,10 @@
         ga('create', 'UA-102278933-1', 'auto');
         ga('send', 'pageview');
     </script>
-    <script src="/static/js/commons.js?{% CACHEBUSTER %}"></script>
+    <script src="/static/js/commons.{% HASH %}.js"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600">
-    <link rel="stylesheet" href="/static/css/commons.css?{% CACHEBUSTER %}">
-    <link rel="stylesheet" href="/static/css/room.css?{% CACHEBUSTER %}">
+    <link rel="stylesheet" href="/static/css/commons.{% HASH %}.css">
+    <link rel="stylesheet" href="/static/css/room.{% HASH %}.css">
     <link rel="icon" href="/static/img/sd-favicon.png">
 </head>
 <body>
@@ -29,6 +29,6 @@
 </nav>
 <div id="room-container"></div>
 <script>var mediaUrl="{% MEDIA_URL %}",roomName="{% NAME %}",roomId="{% ROOM %}",allowedMimes="{% ALLOWED_MIMES %}",initialFiles={% INDEX %};</script>
-<script src="/static/js/room.js?{% CACHEBUSTER %}"></script>
+<script src="/static/js/room.{% HASH %}.js"></script>
 </body>
 </html>

@@ -12,8 +12,8 @@ public class SpeechDropVerticle extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
-        VERSION = Utils.readFileToString(vertx, "version");
-        GIT_HASH = VERSION.split(":")[1];
+        VERSION = Utils.readFileToString(vertx, "VERSION");
+        GIT_HASH = Utils.readFileToString(vertx, "COMMITHASH");
         HttpServerOptions serverOptions = new HttpServerOptions();
         serverOptions.setCompressionSupported(true);
         HttpServer httpServer = vertx.createHttpServer(serverOptions);

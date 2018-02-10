@@ -1003,6 +1003,12 @@ clap@^1.0.9:
   dependencies:
     chalk "^1.1.3"
 
+clean-webpack-plugin@^0.1.18:
+  version "0.1.18"
+  resolved "https://registry.yarnpkg.com/clean-webpack-plugin/-/clean-webpack-plugin-0.1.18.tgz#2e2173897c76646031bff047c14b9c22c80d8c4a"
+  dependencies:
+    rimraf "^2.6.1"
+
 cliui@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/cliui/-/cliui-2.1.0.tgz#4b475760ff80264c762c3a1719032e91c7fea0d1"
@@ -1773,6 +1779,10 @@ getpass@^0.1.1:
   resolved "https://registry.yarnpkg.com/getpass/-/getpass-0.1.7.tgz#5eff8e3e684d569ae4cb2b1282604e8ba62149fa"
   dependencies:
     assert-plus "^1.0.0"
+
+git-revision-webpack-plugin@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/git-revision-webpack-plugin/-/git-revision-webpack-plugin-2.5.1.tgz#3fb4398f376cf27678d6de96ba2669b518645e78"
 
 glob-base@^0.3.0:
   version "0.3.0"

@@ -1,1 +1,0 @@
-${project.version}-${git.branch}:${git.commit.id.abbrev}

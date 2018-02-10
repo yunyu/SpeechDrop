@@ -1,5 +1,8 @@
 const webpack = require('webpack');
+const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const GitRevisionPlugin = require('git-revision-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 const config = {
     entry: {
@@ -8,7 +11,8 @@ const config = {
         about: ['./src/js/about.js']
     },
     output: {
-        filename: './dist/static/js/[name].js'
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'static/js/[name].[git-revision-hash].js'
     },
     module: {
         rules: [
@@ -39,12 +43,14 @@ const config = {
         ]
     },
     plugins: [
+        new CleanWebpackPlugin(['dist']),
+        new GitRevisionPlugin(),
         new webpack.optimize.CommonsChunkPlugin({
             name: 'commons',
             minChunks: 2
         }),
         new ExtractTextPlugin({
-            filename: './dist/static/css/[name].css'
+            filename: 'static/css/[name].[git-revision-hash].css'
         })
     ]
 };

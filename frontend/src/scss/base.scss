@@ -1,4 +1,14 @@
-@import "~picnic/picnic.min.css";
+@import '~picnic/src/themes/default/theme';
+@import '~picnic/src/vendor/compass-breakpoint/stylesheets/breakpoint';
+@import '~picnic/src/plugins/normalize/plugin';
+@import '~picnic/src/plugins/generic/plugin';
+@import '~picnic/src/plugins/label/plugin';
+@import '~picnic/src/plugins/button/plugin';
+@import '~picnic/src/plugins/input/plugin';
+@import '~picnic/src/plugins/grid/plugin';
+@import '~picnic/src/plugins/nav/plugin';
+@import '~picnic/src/plugins/card/plugin';
+@import '~picnic/src/plugins/tooltip/plugin';
 
 body {
     background-color: whitesmoke;

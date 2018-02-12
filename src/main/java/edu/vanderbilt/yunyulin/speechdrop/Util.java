@@ -1,5 +1,7 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
+import com.google.common.escape.Escaper;
+import com.google.common.escape.Escapers;
 import io.vertx.core.buffer.Buffer;
 
 import java.io.ByteArrayOutputStream;
@@ -60,4 +62,15 @@ public class Util {
     public static Buffer getEmptyZipBuffer() {
         return emptyZip;
     }
+
+    public static final Escaper HTML_ESCAPER = Escapers.builder()
+            .addEscape('"', "&quot;")
+            .addEscape('\'', "&#39;")
+            .addEscape('&', "&amp;")
+            .addEscape('<', "&lt;")
+            .addEscape('>', "&gt;")
+            .addEscape('\\', "&#92;")
+            .addEscape('\r', "")
+            .addEscape('\n', "")
+            .build();
 }

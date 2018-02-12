@@ -1,6 +1,5 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
-import com.google.common.html.HtmlEscapers;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import io.vertx.core.Handler;
@@ -21,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static edu.vanderbilt.yunyulin.speechdrop.Util.HTML_ESCAPER;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static io.vertx.core.http.HttpHeaders.LOCATION;
 import static io.vertx.core.http.HttpMethod.GET;
@@ -237,7 +237,7 @@ public class SpeechDropApplication {
                                 .replace("{% INDEX %}", ar.result())
                                 .replace("{% ROOM %}", r.getId())
                                 .replace("{% NAME %}",
-                                        HtmlEscapers.htmlEscaper().escape(r.getData().name))));
+                                        HTML_ESCAPER.escape(r.getData().name))));
             }
         });
     }

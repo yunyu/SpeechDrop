@@ -13,7 +13,7 @@
             <div class="room-divider"></div>
             <span class="room-code">{{ roomId }}</span>
         </div>
-        <transition-group id="file-grid" name="grid-entries" class="flex two three-800 five-1200" tag="div">
+        <transition-group id="file-grid" name="grid-entries" class="flex two three-800 five-1200 six-1800 seven-2000" tag="div">
             <div class="card-wrapper upload-wrapper" v-bind:key="-1">
                 <article class="card upload-card">
                     <div id="file-dropzone">

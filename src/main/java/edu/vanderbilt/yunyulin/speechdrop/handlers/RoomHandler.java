@@ -8,6 +8,7 @@ import com.google.common.cache.LoadingCache;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import lombok.Getter;
@@ -87,7 +88,7 @@ public class RoomHandler {
         return roomCache.getUnchecked(id);
     }
 
-    private void writeRooms() {
+    public void writeRooms() {
         try {
             vertx.fileSystem().writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)), null);
         } catch (JsonProcessingException e) { // This should never happen
@@ -95,13 +96,15 @@ public class RoomHandler {
         }
     }
 
-    public boolean deleteRoom(String id) {
-        if (dataStore.remove(id) == null) {
-            return false;
+    public Future<Void> queueRoomDeletion(String id) {
+        Future<Void> fut = Future.future();
+        if (dataStore.remove(id) != null) {
+            roomCache.invalidate(id);
+            File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
+            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, fut.completer());
+        } else {
+            fut.complete();
         }
-        roomCache.invalidate(id);
-        File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-        vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, res -> writeRooms());
-        return true;
+        return fut;
     }
 }

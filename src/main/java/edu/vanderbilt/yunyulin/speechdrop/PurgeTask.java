@@ -1,12 +1,15 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
@@ -18,15 +21,15 @@ public class PurgeTask {
 
     public void schedule() {
         Handler<Long> runPurge = id -> {
-            List<String> toRemove = new ArrayList<>();
-            roomHandler.getDataStore().forEach((k, v) -> {
-                // 10 min deletion
-                if (System.currentTimeMillis() - v.ctime > purgeIntervalInSeconds * 1000) { // Unix time, so no zoned stuff
-                    toRemove.add(k);
-                }
-            });
-            toRemove.forEach(roomHandler::deleteRoom);
-            LOGGER.info("Purged " + toRemove.size() + " rooms");
+            List<String> toRemove = roomHandler.getDataStore().entrySet().stream()
+                    .filter(el -> System.currentTimeMillis() - el.getValue().ctime > purgeIntervalInSeconds * 1000)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+            CompositeFuture.all(toRemove.stream().map(roomHandler::queueRoomDeletion).collect(Collectors.toList()))
+                    .setHandler(res -> {
+                        roomHandler.writeRooms();
+                        LOGGER.info("Purged " + toRemove.size() + " rooms");
+                    });
         };
         vertx.setPeriodic(3 * 60 * 60 * 1000, runPurge);
         runPurge.handle(0L);

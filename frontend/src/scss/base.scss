@@ -15,6 +15,10 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+nav .brand {
+    transition: none;
+}
+
 nav .brand,
 h3 {
     font-weight: 600;

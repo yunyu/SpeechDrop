@@ -28,8 +28,8 @@
                             <goal>install-node-and-yarn</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v8.9.4</nodeVersion>
-                            <yarnVersion>v1.3.2</yarnVersion>
+                            <nodeVersion>v10.16.0</nodeVersion>
+                            <yarnVersion>v1.16.0</yarnVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -101,12 +101,12 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>3.5.4</version>
+            <version>3.7.1</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
-            <version>3.5.4</version>
+            <version>3.7.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

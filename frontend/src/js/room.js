@@ -87,7 +87,7 @@ new Vue({
                     ga('send', 'event', 'Room', 'upload', roomId);
                 },
                 createImageThumbnails: false,
-                maxFilesize: 5,
+                maxFilesize: 10,
                 uploadMultiple: false,
                 acceptedFiles: allowedMimes
             });

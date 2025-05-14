@@ -40,6 +40,11 @@ new Vue({
             })
             .then(resp => {
                 if (!resp.ok) throw new Error('CSRF failed');
+                if (resp.redirected) {
+                    window.location.href = resp.url;
+                    return;
+                }
+
                 window.location.href = resp.headers.get('Location') || '/'; // or whatever
             })
             .catch(err => {

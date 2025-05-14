@@ -13,8 +13,7 @@
         </div>
         <div class="sep-text">OR</div>
         <div class="room-controls make-room-control">
-            <form class="room-form" action="/makeroom" method="post" onsubmit="ga('send', 'event', 'Room', 'make')">
-                <input type="hidden" name="X-XSRF-TOKEN" v-bind:value="csrfToken">
+            <form class="room-form" @submit.prevent="makeRoom">
                 <input class="room-text" type="text" name="name" pattern=".{1,60}" maxlength="60" required
                        placeholder="Type a new room name">
                 <input class="button" type="submit" value="Make Room">

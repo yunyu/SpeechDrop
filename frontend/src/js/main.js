@@ -18,8 +18,7 @@ new Vue({
     data: {
         code: '',
         hint: charRemaining(''),
-        codeInputClass: null,
-        csrfToken: Cookies.get('XSRF-TOKEN')
+        codeInputClass: null
     },
     watch: {
         code(val) {
@@ -27,6 +26,26 @@ new Vue({
         }
     },
     methods: {
+        makeRoom(e) {
+            ga('send', 'event', 'Room', 'make')
+
+            const token = Cookies.get('XSRF-TOKEN');          // current value
+            const body  = new FormData(e.target);             // keep form fields
+
+            fetch('/makeroom', {
+                method: 'POST',
+                credentials: 'same-origin',                   // keeps cookies
+                headers: { 'X-XSRF-TOKEN': token },
+                body
+            })
+            .then(resp => {
+                if (!resp.ok) throw new Error('CSRF failed');
+                window.location.href = resp.headers.get('Location') || '/'; // or whatever
+            })
+            .catch(err => {
+                // handle error/UI feedback
+            });
+        },
         produceHint(val) {
             if (val.length < maxChars) {
                 this.codeInputClass = null;

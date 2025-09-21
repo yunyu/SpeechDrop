@@ -3433,10 +3433,10 @@ performance-now@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-0.2.0.tgz#33ef30c5c77d4ea21c5a53869d91b56d8f2555e5"
 
-picnic@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/picnic/-/picnic-7.1.0.tgz#d00a29b73ac3fa701e5ac3f6cfb42318540d861c"
-  integrity sha512-OFoJClCDSaCnavs7QZPMIIjrodUO8m6V+GBNOWaIN4kk3IjzSAd2kp/RfkpZRwXK2u71q5mJ3UQaQjHJRr3dnw==
+picnic@^6.5.5:
+  version "6.5.5"
+  resolved "https://registry.yarnpkg.com/picnic/-/picnic-6.5.5.tgz#0ae3d3d692edec1e1aa4f7a63893221f98827ed7"
+  integrity sha512-U23rCxul+6DfSnBbg2etvb2+p0wOpr2FLtpQWvwyEnad7kPdNhZuHGAh6ih2yrm9wG2umj0Os4DpNkLyQAduKA==
 
 picocolors@^1.1.1:
   version "1.1.1"

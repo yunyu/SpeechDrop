@@ -94,6 +94,20 @@ new Vue({
             });
             resetDropzone(dropCard.element);
         });
+
+        // Close confirmation modal on Escape key
+        this._onKeydown = e => {
+            const isEscape = e.key === 'Escape' || e.keyCode === 27;
+            if (isEscape) {
+                this.confirmDeleteFile = null;
+            }
+        };
+        document.addEventListener('keydown', this._onKeydown);
+    },
+    beforeDestroy() {
+        if (this._onKeydown) {
+            document.removeEventListener('keydown', this._onKeydown);
+        }
     },
     methods: {
         deleteFile(fileIndex) {

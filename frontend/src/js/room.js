@@ -15,7 +15,8 @@ function getCsrfToken() {
 new Vue({
     el: '#room-container',
     data: {
-        files: initialFiles
+        files: initialFiles,
+        confirmDeleteFile: null
     },
     beforeMount() {
         this.roomName = roomName;
@@ -108,6 +109,23 @@ new Vue({
             r.onload = () => this.updateFiles(r.response);
             r.send(data);
             ga('send', 'event', 'Room', 'delete', roomId);
+        },
+        promptDelete(fileEntry) {
+            this.confirmDeleteFile = fileEntry;
+        },
+        confirmDelete() {
+            if (this.confirmDeleteFile !== null) {
+                this.deleteFile(this.confirmDeleteFile.origPos);
+                this.confirmDeleteFile = null;
+            }
+        },
+        cancelDelete() {
+            this.confirmDeleteFile = null;
+        },
+        onConfirmModalChange(e) {
+            if (!e.target.checked) {
+                this.cancelDelete();
+            }
         },
         // Nasty workaround for https://github.com/vuejs/vue/issues/5800
         updateFiles(filesJson) {

@@ -44,14 +44,14 @@
             <article>
                 <header>
                     <h3>Delete file?</h3>
-                    <label for="modal_1" class="close" @click="cancelDelete">&times;</label>
+                    <label for="modal_1" class="close delete-button" @click="cancelDelete">&times;</label>
                 </header>
                 <section class="content">
                     Are you sure you want to delete <strong>{{ confirmDeleteFile && confirmDeleteFile.name }}</strong>?
                 </section>
                 <footer>
                     <button class="button dangerous" @click="confirmDelete">Delete</button>
-                    <label for="modal_1" class="button" @click="cancelDelete">Cancel</label>
+                    <label for="modal_1" class="button pseudo cancel-button" @click="cancelDelete">Cancel</label>
                 </footer>
             </article>
         </div>

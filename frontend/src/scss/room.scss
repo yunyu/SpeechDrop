@@ -221,18 +221,25 @@
 }
 
 .delete-button {
-    position: absolute;
-    right: 10px;
-    padding: 4px;
-    top: 12px;
-    line-height: 10px;
     color: #ddd;
-    font-size: 24px;
     cursor: pointer;
-    z-index: 2;
     transition: all 0.25s;
 }
 
 .delete-button:hover {
-    color: #b72a2a;
+    color: #ff4136;
+}
+
+.card .delete-button {
+    position: absolute;
+    right: 10px;
+    z-index: 2;
+    top: 12px;
+    padding: 4px;
+    line-height: 10px;
+    font-size: 24px;
+}
+
+.cancel-button {
+    box-shadow: 0 0 1px 1px #eee;
 }

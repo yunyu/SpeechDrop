@@ -39,3 +39,7 @@ h3 {
         -webkit-backdrop-filter: blur(20px);
     }
 }
+
+.card header, .modal .overlay~* header {
+    border-bottom: 1px solid #eee;
+}

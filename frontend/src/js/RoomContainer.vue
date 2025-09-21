@@ -24,7 +24,7 @@
             </div>
             <div class="card-wrapper" v-for="fileEntry in fileList" v-bind:key="fileEntry.origPos">
                 <article class="card">
-                    <div v-on:click.self="deleteFile(fileEntry.origPos)" class="delete-button">&#215;</div>
+                    <div v-on:click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
                     <a v-bind:href="fileEntry.url" download>
                     <header class="file-header">
                         <h3>{{ fileEntry.name }}</h3>
@@ -38,5 +38,22 @@
                 </article>
             </div>
         </transition-group>
+        <div class="modal">
+            <input id="modal_1" type="checkbox" :checked="confirmDeleteFile !== null" @change="onConfirmModalChange" />
+            <label for="modal_1" class="overlay" @click="cancelDelete"></label>
+            <article>
+                <header>
+                    <h3>Delete file?</h3>
+                    <label for="modal_1" class="close delete-button" @click="cancelDelete">&times;</label>
+                </header>
+                <section class="content">
+                    Are you sure you want to delete <strong>{{ confirmDeleteFile && confirmDeleteFile.name }}</strong>?
+                </section>
+                <footer>
+                    <button class="button dangerous" @click="confirmDelete">Delete</button>
+                    <label for="modal_1" class="button pseudo cancel-button" @click="cancelDelete">Cancel</label>
+                </footer>
+            </article>
+        </div>
     </div>
 </template>

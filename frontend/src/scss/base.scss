@@ -9,6 +9,7 @@
 @import '~picnic/src/plugins/nav/plugin';
 @import '~picnic/src/plugins/card/plugin';
 @import '~picnic/src/plugins/tooltip/plugin';
+@import '~picnic/src/plugins/modal/plugin';
 
 body {
     background-color: whitesmoke;
@@ -37,4 +38,8 @@ h3 {
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
     }
+}
+
+.card header, .modal .overlay~* header {
+    border-bottom: 1px solid #eee;
 }

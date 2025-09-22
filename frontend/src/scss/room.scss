@@ -231,11 +231,11 @@
 }
 
 .card .delete-button {
+    top: 0;
+    right: 0;
     position: absolute;
-    right: 10px;
     z-index: 2;
-    top: 12px;
-    padding: 4px;
+    padding: 16px 14px;
     line-height: 10px;
     font-size: 24px;
 }

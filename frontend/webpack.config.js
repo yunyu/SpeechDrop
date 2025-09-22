@@ -1,10 +1,13 @@
-const webpack = require('webpack');
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const GitRevisionPlugin = require('git-revision-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
-const config = {
+const gitRevisionPlugin = new GitRevisionPlugin();
+
+module.exports = {
     entry: {
         main: ['./src/js/main.js'],
         room: ['./src/js/room.js'],
@@ -12,7 +15,8 @@ const config = {
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'static/js/[name].[git-revision-hash].js'
+        filename: 'static/js/[name].[git-revision-hash].js',
+        chunkFilename: 'static/js/[name].[git-revision-hash].js'
     },
     module: {
         rules: [
@@ -22,37 +26,69 @@ const config = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['env', 'stage-2']
+                        presets: [
+                            [
+                                '@babel/preset-env',
+                                {
+                                    targets: '> 0.25%, not dead'
+                                }
+                            ]
+                        ]
                     }
                 }
             },
             {
                 test: /\.vue$/,
-                exclude: /node_modules/,
-                use: {
-                    loader: 'vue-loader'
-                }
+                loader: 'vue-loader'
             },
             {
                 test: /\.scss$/,
-                loader: ExtractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: ['css-loader', 'sass-loader']
-                })
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            url: false
+                        }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            implementation: require('sass')
+                        }
+                    }
+                ]
             }
         ]
     },
+    resolve: {
+        extensions: ['.js', '.vue'],
+        alias: {
+            vue$: 'vue/dist/vue.esm-bundler.js'
+        }
+    },
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                commons: {
+                    name: 'commons',
+                    chunks: 'all',
+                    minChunks: 2,
+                    enforce: true
+                }
+            }
+        }
+    },
     plugins: [
-        new CleanWebpackPlugin(['dist']),
-        new GitRevisionPlugin(),
-        new webpack.optimize.CommonsChunkPlugin({
-            name: 'commons',
-            minChunks: 2
+        new CleanWebpackPlugin(),
+        gitRevisionPlugin,
+        new webpack.DefinePlugin({
+            __VUE_OPTIONS_API__: true,
+            __VUE_PROD_DEVTOOLS__: false
         }),
-        new ExtractTextPlugin({
+        new MiniCssExtractPlugin({
             filename: 'static/css/[name].[git-revision-hash].css'
-        })
+        }),
+        new VueLoaderPlugin()
     ]
 };
-
-module.exports = config;

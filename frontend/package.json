@@ -15,7 +15,7 @@
         "git-revision-webpack-plugin": "^2.5.1",
         "js-cookie": "2.1.4",
         "picnic": "^7.0.0",
-        "sass": "^1.77.8",
+        "sass": "1.62.1",
         "sass-loader": "^7.3.1",
         "style-loader": "^0.20.1",
         "vertx3-eventbus-client": "^3.7.1",

@@ -1,3 +1,4 @@
+import 'picnic/picnic.min.css';
 import '../scss/base.scss';
 import '../scss/main.scss';
 

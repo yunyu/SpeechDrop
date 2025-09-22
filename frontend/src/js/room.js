@@ -1,3 +1,4 @@
+import 'picnic/picnic.min.css';
 import '../scss/base.scss';
 import '../scss/room.scss';
 
@@ -136,11 +137,6 @@ new Vue({
         cancelDelete() {
             this.confirmDeleteFile = null;
         },
-        onConfirmModalChange(e) {
-            if (!e.target.checked) {
-                this.cancelDelete();
-            }
-        },
         // Nasty workaround for https://github.com/vuejs/vue/issues/5800
         updateFiles(filesJson) {
             if (this.prevFilesJson !== filesJson) {
@@ -150,6 +146,16 @@ new Vue({
         }
     },
     computed: {
+        isConfirmDeleteOpen: {
+            get() {
+                return this.confirmDeleteFile !== null;
+            },
+            set(value) {
+                if (!value) {
+                    this.cancelDelete();
+                }
+            }
+        },
         fileList() {
             function formatDate(timestamp) {
                 const date = new Date(timestamp);

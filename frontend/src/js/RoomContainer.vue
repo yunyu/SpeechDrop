@@ -39,7 +39,7 @@
             </div>
         </transition-group>
         <div class="modal">
-            <input id="modal_1" type="checkbox" :checked="confirmDeleteFile !== null" @change="onConfirmModalChange" />
+            <input id="modal_1" type="checkbox" v-model="isConfirmDeleteOpen" />
             <label for="modal_1" class="overlay" @click="cancelDelete"></label>
             <article>
                 <header>

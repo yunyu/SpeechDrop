@@ -64,18 +64,18 @@
         </transition-group>
         <div class="modal">
             <input id="modal_1" type="checkbox" :checked="confirmDeleteFile !== null" @change="onConfirmModalChange" />
-            <label for="modal_1" class="overlay" @click="cancelDelete"></label>
+            <label for="modal_1" class="overlay"></label>
             <article>
                 <header>
                     <h3>Delete file?</h3>
-                    <label for="modal_1" class="close delete-button" @click="cancelDelete">&times;</label>
+                    <span class="close delete-button" @click="cancelDelete">&times;</span>
                 </header>
                 <section class="content">
                     Are you sure you want to delete <strong>{{ confirmDeleteFile && confirmDeleteFile.name }}</strong>?
                 </section>
                 <footer>
                     <button class="button dangerous" @click="confirmDelete">Delete</button>
-                    <label for="modal_1" class="button pseudo cancel-button" @click="cancelDelete">Cancel</label>
+                    <button class="button pseudo cancel-button" @click="cancelDelete">Cancel</button>
                 </footer>
             </article>
         </div>

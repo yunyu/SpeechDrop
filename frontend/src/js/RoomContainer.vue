@@ -89,20 +89,18 @@ import EventBus from 'vertx3-eventbus-client';
 
 Dropzone.autoDiscover = false;
 
-const getWindowVar = (key, fallback) => (typeof window !== 'undefined' && window[key] !== undefined ? window[key] : fallback);
-
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
 
 export default {
     name: 'RoomContainer',
     data() {
         return {
-            files: getWindowVar('initialFiles', []),
+            files: window.initialFiles,
             confirmDeleteFile: null,
-            roomName: getWindowVar('roomName', ''),
-            roomId: getWindowVar('roomId', ''),
-            mediaUrl: getWindowVar('mediaUrl', ''),
-            allowedMimes: getWindowVar('allowedMimes', ''),
+            roomName: window.roomName,
+            roomId: window.roomId,
+            mediaUrl: window.mediaUrl,
+            allowedMimes: window.allowedMimes,
             prevFilesJson: null,
             _onKeydown: null
         };

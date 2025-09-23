@@ -6,12 +6,19 @@ const { VueLoaderPlugin } = require('vue-loader');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
 
+const gitRevisionPlugin = new GitRevisionPlugin();
+
 const faviconPath = path.resolve(__dirname, 'src/static/img/sd-favicon.png');
 
 const pages = [
     { name: 'main', template: 'main.html', chunks: ['commons', 'main'] },
     { name: 'room', template: 'room.html', chunks: ['commons', 'room'] },
-    { name: 'about', template: 'about.html', chunks: ['commons', 'about'] }
+    {
+        name: 'about',
+        template: 'about.html',
+        chunks: ['commons', 'about'],
+        templateParameters: { VERSION: gitRevisionPlugin.version() }
+    }
 ];
 
 module.exports = {
@@ -90,7 +97,7 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new GitRevisionPlugin(),
+        gitRevisionPlugin,
         new webpack.DefinePlugin({
             __VUE_OPTIONS_API__: true,
             __VUE_PROD_DEVTOOLS__: false
@@ -99,16 +106,16 @@ module.exports = {
             filename: 'static/css/[name].[contenthash].css'
         }),
         new VueLoaderPlugin(),
-        ...pages.map(
-            page =>
-                new HtmlWebpackPlugin({
-                    filename: `${page.name}.html`,
-                    template: path.resolve(__dirname, `src/html/${page.template}`),
-                    chunks: page.chunks,
-                    inject: 'body',
-                    scriptLoading: 'blocking',
-                    favicon: faviconPath
-                })
+        ...pages.map(page =>
+            new HtmlWebpackPlugin({
+                filename: `${page.name}.html`,
+                template: path.resolve(__dirname, `src/html/${page.template}`),
+                chunks: page.chunks,
+                inject: 'body',
+                scriptLoading: 'blocking',
+                favicon: faviconPath,
+                ...(page.templateParameters ? { templateParameters: page.templateParameters } : {})
+            })
         )
     ]
 };

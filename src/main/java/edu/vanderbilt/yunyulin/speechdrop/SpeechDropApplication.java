@@ -5,6 +5,7 @@ import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -57,6 +58,7 @@ public class SpeechDropApplication {
     private final String mainPage;
     private final String roomTemplate;
     private final String aboutPage;
+    private final String allowedMimeTypesCsv;
 
     public SpeechDropApplication(Vertx vertx, JsonObject config, String mainPage, String roomTemplate, String aboutPage) {
         this.vertx = vertx;
@@ -67,13 +69,10 @@ public class SpeechDropApplication {
         broadcaster = new Broadcaster(vertx, roomHandler);
 
         // Initialize templates
-        this.mainPage = replaceHash(mainPage);
-        this.roomTemplate = replaceHash(roomTemplate.replace("{% ALLOWED_MIMES %}", String.join(",", allowedMimeTypes)));
-        this.aboutPage = replaceHash(aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION));
-    }
-
-    private static String replaceHash(String template) {
-        return template.replace("{% HASH %}", SpeechDropVerticle.GIT_HASH);
+        this.allowedMimeTypesCsv = String.join(",", allowedMimeTypes);
+        this.mainPage = mainPage;
+        this.roomTemplate = roomTemplate;
+        this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
     }
 
     private void sendEmptyIndex(RoutingContext ctx, int errCode) {
@@ -231,13 +230,21 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar -> ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML)
-                        .end(roomTemplate
-                                .replace("{% MEDIA_URL %}", mediaUrl)
-                                .replace("{% INDEX %}", ar.result())
-                                .replace("{% ROOM %}", r.getId())
-                                .replace("{% NAME %}",
-                                        HTML_ESCAPER.escape(r.getData().name))));
+                r.getIndex().setHandler(ar -> {
+                    String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
+                    JsonObject configPayload = new JsonObject()
+                            .put("mediaUrl", mediaUrl)
+                            .put("roomName", escapedRoomName)
+                            .put("roomId", r.getId())
+                            .put("allowedMimes", allowedMimeTypesCsv)
+                            .put("initialFiles", new JsonArray(ar.result()));
+
+                    ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
+                            roomTemplate
+                                    .replace("{% ROOM_NAME %}", escapedRoomName)
+                                    .replace("{% ROOM_CONFIG %}", configPayload.encode())
+                    );
+                });
             }
         });
     }

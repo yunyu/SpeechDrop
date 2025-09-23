@@ -87,19 +87,25 @@ import EventBus from 'vertx3-eventbus-client';
 
 Dropzone.autoDiscover = false;
 
+const roomConfig = window.roomConfig || {};
+const initialFiles = Array.isArray(roomConfig.initialFiles) ? roomConfig.initialFiles : [];
+const allowedMimes = Array.isArray(roomConfig.allowedMimes)
+    ? roomConfig.allowedMimes.join(',')
+    : roomConfig.allowedMimes;
+
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
 
 export default {
     name: 'RoomContainer',
     data() {
         return {
-            files: window.initialFiles,
+            files: initialFiles.slice(),
             confirmDeleteFile: null,
-            roomName: window.roomName,
-            roomId: window.roomId,
-            mediaUrl: window.mediaUrl,
-            allowedMimes: window.allowedMimes,
-            prevFilesJson: null,
+            roomName: roomConfig.roomName || '',
+            roomId: roomConfig.roomId || '',
+            mediaUrl: roomConfig.mediaUrl || '',
+            allowedMimes: allowedMimes || '',
+            prevFilesJson: JSON.stringify(initialFiles),
             _onKeydown: null
         };
     },

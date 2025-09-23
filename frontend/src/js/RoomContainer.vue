@@ -90,11 +90,7 @@ import uploadIcon from '../static/img/upload-icon.svg';
 
 Dropzone.autoDiscover = false;
 
-const roomConfig = window.roomConfig || {};
-const initialFiles = Array.isArray(roomConfig.initialFiles) ? roomConfig.initialFiles : [];
-const allowedMimes = Array.isArray(roomConfig.allowedMimes)
-    ? roomConfig.allowedMimes.join(',')
-    : roomConfig.allowedMimes;
+const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
 
@@ -102,13 +98,13 @@ export default {
     name: 'RoomContainer',
     data() {
         return {
-            files: initialFiles.slice(),
+            files: roomConfig.initialFiles.slice(),
             confirmDeleteFile: null,
-            roomName: roomConfig.roomName || '',
-            roomId: roomConfig.roomId || '',
-            mediaUrl: roomConfig.mediaUrl || '',
-            allowedMimes: allowedMimes || '',
-            prevFilesJson: JSON.stringify(initialFiles),
+            roomName: roomConfig.roomName,
+            roomId: roomConfig.roomId,
+            mediaUrl: roomConfig.mediaUrl,
+            allowedMimes: roomConfig.allowedMimes,
+            prevFilesJson: JSON.stringify(roomConfig.initialFiles),
             _onKeydown: null,
             downloadFolderIcon,
             uploadIcon

@@ -17,7 +17,7 @@
         "picnic": "^7.0.0",
         "sass": "1.62.1",
         "sass-loader": "^14.2.1",
-        "vertx3-eventbus-client": "^3.7.1",
+        "vertx3-eventbus-client": "^3.9.4",
         "vue": "^3.4.30",
         "vue-loader": "^17.4.2",
         "webpack": "^5.92.1",

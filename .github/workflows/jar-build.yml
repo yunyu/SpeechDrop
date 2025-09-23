@@ -1,8 +1,6 @@
 name: Build JAR
 
-on:
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
   build:

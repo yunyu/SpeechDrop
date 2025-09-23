@@ -12,7 +12,11 @@ const faviconPath = path.resolve(__dirname, 'src/static/img/sd-favicon.png');
 
 const pages = [
     { name: 'main', template: 'main.html', chunks: ['commons', 'main'] },
-    { name: 'room', template: 'room.html', chunks: ['commons', 'room'] },
+    {
+        name: 'room', template: 'room.html', chunks: ['commons', 'room'],
+        // Hack: Preserve for backend replacement
+        templateParameters: { ROOM_CONFIG: '<%= ROOM_CONFIG %>' }
+    },
     {
         name: 'about',
         template: 'about.html',

@@ -26,6 +26,7 @@
                 <version>1.15.1</version>
                 <configuration>
                     <workingDirectory>${frontend.directory}</workingDirectory>
+                    <yarnInheritsProxyConfigFromMaven>false</yarnInheritsProxyConfigFromMaven>
                 </configuration>
                 <executions>
                     <execution>

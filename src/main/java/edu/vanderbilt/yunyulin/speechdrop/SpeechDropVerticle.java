@@ -8,12 +8,10 @@ import io.vertx.ext.web.impl.Utils;
 
 public class SpeechDropVerticle extends AbstractVerticle {
     public static String VERSION;
-    public static String GIT_HASH;
 
     @Override
     public void start() throws Exception {
         VERSION = Utils.readFileToString(vertx, "VERSION");
-        GIT_HASH = Utils.readFileToString(vertx, "COMMITHASH");
         HttpServerOptions serverOptions = new HttpServerOptions();
         serverOptions.setCompressionSupported(true);
         HttpServer httpServer = vertx.createHttpServer(serverOptions);

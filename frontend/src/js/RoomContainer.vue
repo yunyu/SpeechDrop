@@ -9,7 +9,7 @@
             download
         >
             <img
-                src="/static/img/download-folder.svg"
+                :src="downloadFolderIcon"
                 class="header-button-img"
                 alt="Download icon"
             />
@@ -31,7 +31,7 @@
                 <div id="file-dropzone">
                     <img
                         class="passthrough-pointer"
-                        src="/static/img/upload-icon.svg"
+                        :src="uploadIcon"
                         width="80"
                         height="80"
                         alt="Upload icon"
@@ -85,7 +85,12 @@ import Dropzone from 'dropzone';
 import Cookies from 'js-cookie';
 import EventBus from 'vertx3-eventbus-client';
 
+import downloadFolderIcon from '../static/img/download-folder.svg';
+import uploadIcon from '../static/img/upload-icon.svg';
+
 Dropzone.autoDiscover = false;
+
+const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
 
@@ -93,14 +98,16 @@ export default {
     name: 'RoomContainer',
     data() {
         return {
-            files: window.initialFiles,
+            files: roomConfig.initialFiles.slice(),
             confirmDeleteFile: null,
-            roomName: window.roomName,
-            roomId: window.roomId,
-            mediaUrl: window.mediaUrl,
-            allowedMimes: window.allowedMimes,
-            prevFilesJson: null,
-            _onKeydown: null
+            roomName: roomConfig.roomName,
+            roomId: roomConfig.roomId,
+            mediaUrl: roomConfig.mediaUrl,
+            allowedMimes: roomConfig.allowedMimes,
+            prevFilesJson: JSON.stringify(roomConfig.initialFiles),
+            _onKeydown: null,
+            downloadFolderIcon,
+            uploadIcon
         };
     },
     mounted() {

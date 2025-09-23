@@ -10,8 +10,7 @@ const roomConfig = window.roomConfig || {};
 const htmlDecode = (input) => {
     let doc = new DOMParser().parseFromString(input, "text/html");
     return doc.documentElement.textContent;
-  }
-  
+}
 
 const roomName = roomConfig.roomName;
 if (roomName) {

@@ -72,7 +72,7 @@ public class SpeechDropApplication {
         this.allowedMimeTypesCsv = String.join(",", allowedMimeTypes);
         this.mainPage = mainPage;
         this.roomTemplate = roomTemplate;
-        this.aboutPage = aboutPage.replace("{% VERSION %}", SpeechDropVerticle.VERSION);
+        this.aboutPage = aboutPage.replace("$VERSION", SpeechDropVerticle.VERSION);
     }
 
     private void sendEmptyIndex(RoutingContext ctx, int errCode) {
@@ -241,7 +241,7 @@ public class SpeechDropApplication {
 
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
                             roomTemplate
-                                    .replace("{% ROOM_CONFIG %}", configPayload.encode())
+                                    .replace("$ROOM_CONFIG", configPayload.encode())
                     );
                 });
             }

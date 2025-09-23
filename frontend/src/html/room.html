@@ -14,6 +14,9 @@
         ga('send', 'pageview');
     </script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600">
+    <script>
+      window.roomConfig = {% ROOM_CONFIG %};
+    </script>
 </head>
 <body>
 <nav>
@@ -25,8 +28,5 @@
   </div>
 </nav>
 <div class="container" id="room-container"></div>
-<script>
-    window.roomConfig = {% ROOM_CONFIG %};
-</script>
 </body>
 </html>

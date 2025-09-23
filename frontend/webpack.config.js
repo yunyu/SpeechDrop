@@ -106,7 +106,7 @@ module.exports = {
                     template: path.resolve(__dirname, `src/html/${page.template}`),
                     chunks: page.chunks,
                     inject: 'body',
-                    scriptLoading: 'defer',
+                    scriptLoading: 'blocking',
                     favicon: faviconPath
                 })
         )

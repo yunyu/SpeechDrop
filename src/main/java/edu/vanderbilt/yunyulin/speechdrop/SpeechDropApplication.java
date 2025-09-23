@@ -241,7 +241,6 @@ public class SpeechDropApplication {
 
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
                             roomTemplate
-                                    .replace("{% ROOM_NAME %}", escapedRoomName)
                                     .replace("{% ROOM_CONFIG %}", configPayload.encode())
                     );
                 });

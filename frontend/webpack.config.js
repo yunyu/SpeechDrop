@@ -1,10 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const faviconPath = path.resolve(__dirname, 'src/static/img/sd-favicon.png');
 
 const pages = [
     { name: 'main', template: 'main.html', chunks: ['commons', 'main'] },
@@ -50,12 +51,7 @@ module.exports = {
                 test: /\.scss$/,
                 use: [
                     MiniCssExtractPlugin.loader,
-                    {
-                        loader: 'css-loader',
-                        options: {
-                            url: false
-                        }
-                    },
+                    'css-loader',
                     {
                         loader: 'sass-loader',
                         options: {
@@ -63,6 +59,13 @@ module.exports = {
                         }
                     }
                 ]
+            },
+            {
+                test: /\.(png|svg)$/i,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'static/img/[name].[contenthash][ext]'
+                }
             }
         ]
     },
@@ -86,15 +89,6 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: path.resolve(__dirname, 'src/static'),
-                    to: 'static',
-                    noErrorOnMissing: true
-                }
-            ]
-        }),
         new webpack.DefinePlugin({
             __VUE_OPTIONS_API__: true,
             __VUE_PROD_DEVTOOLS__: false
@@ -110,7 +104,8 @@ module.exports = {
                     template: path.resolve(__dirname, `src/html/${page.template}`),
                     chunks: page.chunks,
                     inject: 'body',
-                    scriptLoading: 'defer'
+                    scriptLoading: 'defer',
+                    favicon: faviconPath
                 })
         )
     ]

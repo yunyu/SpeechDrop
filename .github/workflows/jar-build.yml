@@ -21,4 +21,4 @@ jobs:
           cache: maven
 
       - name: Build JAR
-        run: mvn -B -ntp package -DskipTests
+        run: mvn -B -ntp package

@@ -24,3 +24,10 @@ jobs:
 
       - name: Build JAR
         run: mvn -B -ntp package
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speechdrop-jar
+          path: target/*.jar
+          if-no-files-found: error

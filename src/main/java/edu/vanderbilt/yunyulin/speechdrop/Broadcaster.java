@@ -2,12 +2,15 @@ package edu.vanderbilt.yunyulin.speechdrop;
 
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
+
+import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 public class Broadcaster {
     private final Vertx vertx;
@@ -38,6 +41,13 @@ public class Broadcaster {
                     be.complete(false);
                     return;
                 }
+            } else if (be.type() == BridgeEventType.SOCKET_CREATED) {
+                be.socket().exceptionHandler(t -> {
+                    if (t instanceof VertxException && "Connection was closed".equals(t.getMessage())) {
+                        return;
+                    }
+                    LOGGER.error("Unhandled exception on SockJS socket", t);
+                });
             }
             be.complete(true);
         });

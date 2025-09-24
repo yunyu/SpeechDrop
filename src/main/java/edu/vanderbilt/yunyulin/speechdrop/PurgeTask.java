@@ -28,7 +28,11 @@ public class PurgeTask {
             CompositeFuture.all(toRemove.stream().map(roomHandler::queueRoomDeletion).collect(Collectors.toList()))
                     .onComplete(res -> {
                         roomHandler.writeRooms();
-                        LOGGER.info("Purged " + toRemove.size() + " rooms");
+                        if (res.succeeded()) {
+                            LOGGER.info("Purged " + toRemove.size() + " rooms");
+                        } else {
+                            LOGGER.error("Failed to purge one or more rooms", res.cause());
+                        }
                     });
         };
         vertx.setPeriodic(3 * 60 * 60 * 1000, runPurge);

@@ -92,8 +92,7 @@ public class RoomHandler {
     public void writeRooms() {
         try {
             vertx.fileSystem()
-                    .writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)))
-                    .onFailure(err -> LOGGER.error("Failed to persist rooms metadata", err));
+                    .writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)));
         } catch (JsonProcessingException e) { // This should never happen
             e.printStackTrace();
         }
@@ -104,13 +103,7 @@ public class RoomHandler {
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
             File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true).onComplete(ar -> {
-                if (ar.succeeded()) {
-                    promise.complete();
-                } else {
-                    promise.fail(ar.cause());
-                }
-            });
+            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true).onComplete(promise);
         } else {
             promise.complete();
         }

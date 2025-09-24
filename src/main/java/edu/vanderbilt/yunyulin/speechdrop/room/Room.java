@@ -48,7 +48,6 @@ public class Room {
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
         if (!itr.hasNext()) {
             uploadPromise.fail(new Exception("no_file"));
-            return uploadPromise.future();
         }
 
         FileUpload uploadedFile = itr.next();
@@ -57,11 +56,9 @@ public class Room {
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
             uploadPromise.fail(new Exception("bad_type"));
-            return uploadPromise.future();
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
             uploadPromise.fail(new Exception("too_large"));
-            return uploadPromise.future();
         }
 
         scheduleOperation(index -> index.addFile(uploadedFile, now, uploadPromise::complete));

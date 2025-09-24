@@ -124,14 +124,9 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().onComplete(ar -> {
-                    if (ar.succeeded()) {
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
-                    } else {
-                        LOGGER.error("Failed to fetch index for room " + roomId, ar.cause());
-                        sendEmptyIndex(ctx, 500);
-                    }
-                });
+                r.getIndex().onComplete(ar ->
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
+                );
             }
         });
 
@@ -142,11 +137,6 @@ public class SpeechDropApplication {
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 r.getFiles().onComplete(ar -> {
-                    if (ar.failed()) {
-                        LOGGER.error("Failed to gather files for room " + roomId, ar.cause());
-                        ctx.response().setStatusCode(500).end();
-                        return;
-                    }
                     Collection<File> files = ar.result();
                     String outFile = r.getData().name.trim() + ".zip";
 
@@ -174,7 +164,6 @@ public class SpeechDropApplication {
                                 writeBufferToResponse.handle(res.result());
                             } else {
                                 ctx.response().setStatusCode(500).end();
-                                LOGGER.error("Failed to archive files for room " + roomId, res.cause());
                             }
                         });
                     }
@@ -195,7 +184,6 @@ public class SpeechDropApplication {
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
                         broadcaster.publishUpdate(r.getId(), index);
                     } else {
-                        LOGGER.warn("[" + roomId + "] Upload failed", ar.cause());
                         ctx.response().setStatusCode(400).end(
                                 new JsonObject().put("err", ar.cause().getMessage()).toString()
                         );
@@ -216,13 +204,8 @@ public class SpeechDropApplication {
                     sendEmptyIndex(ctx, 400);
                 } else {
                     r.deleteFile(Integer.parseInt(fileIndex)).onComplete(ar -> {
-                        if (ar.succeeded()) {
-                            ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
-                            broadcaster.publishUpdate(r.getId(), ar.result());
-                        } else {
-                            LOGGER.error("Failed to delete file in room " + roomId, ar.cause());
-                            sendEmptyIndex(ctx, 500);
-                        }
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
+                        broadcaster.publishUpdate(r.getId(), ar.result());
                     });
                 }
             }
@@ -247,11 +230,6 @@ public class SpeechDropApplication {
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 r.getIndex().onComplete(ar -> {
-                    if (ar.failed()) {
-                        LOGGER.error("Failed to render room " + roomId, ar.cause());
-                        ctx.response().setStatusCode(500).end();
-                        return;
-                    }
                     String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
                     JsonObject configPayload = new JsonObject()
                             .put("mediaUrl", mediaUrl)

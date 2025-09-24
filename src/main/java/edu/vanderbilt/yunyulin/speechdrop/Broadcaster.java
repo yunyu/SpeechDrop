@@ -29,19 +29,13 @@ public class Broadcaster {
                 String roomId = getRoomId(address);
                 if (roomId != null && roomHandler.roomExists(roomId)) {
                     roomHandler.getRoom(roomId).getIndex().onComplete(ar -> {
-                        if (ar.succeeded()) {
-                            // Copies envelope structure from EventBusBridgeImpl##deliverMessage
-                            be.socket().write(Buffer.buffer(new JsonObject()
-                                    .put("type", "rec")
-                                    .put("address", address)
-                                    .put("body", ar.result())
-                                    .encode()
-                            ));
-                            be.complete(true);
-                        } else {
-                            LOGGER.error("Failed to deliver initial index for room " + roomId, ar.cause());
-                            be.complete(false);
-                        }
+                        // Copies envelope structure from EventBusBridgeImpl##deliverMessage
+                        be.socket().write(Buffer.buffer(new JsonObject()
+                                .put("type", "rec")
+                                .put("address", address)
+                                .put("body", ar.result())
+                                .encode()
+                        ));
                     });
                     return;
                 } else {

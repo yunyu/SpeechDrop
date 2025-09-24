@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -110,6 +111,14 @@ module.exports = {
             filename: 'static/css/[name].[contenthash].css'
         }),
         new VueLoaderPlugin(),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: faviconPath,
+                    to: 'static/img/sd-favicon.png'
+                }
+            ]
+        }),
         ...pages.map(page =>
             new HtmlWebpackPlugin({
                 filename: `${page.name}.html`,
@@ -117,7 +126,6 @@ module.exports = {
                 chunks: page.chunks,
                 inject: 'body',
                 scriptLoading: 'blocking',
-                favicon: faviconPath,
                 ...(page.templateParameters ? { templateParameters: page.templateParameters } : {})
             })
         )

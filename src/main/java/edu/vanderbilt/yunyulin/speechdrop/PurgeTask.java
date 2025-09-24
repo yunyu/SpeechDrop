@@ -26,7 +26,7 @@ public class PurgeTask {
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
             CompositeFuture.all(toRemove.stream().map(roomHandler::queueRoomDeletion).collect(Collectors.toList()))
-                    .setHandler(res -> {
+                    .onComplete(res -> {
                         roomHandler.writeRooms();
                         LOGGER.info("Purged " + toRemove.size() + " rooms");
                     });

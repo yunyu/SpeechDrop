@@ -4,6 +4,7 @@ import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
@@ -42,11 +43,11 @@ public class Room {
     }
 
     public Future<String> handleUpload(RoutingContext ctx) {
-        Future<String> uploadFuture = Future.future();
+        Promise<String> uploadPromise = Promise.promise();
 
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
         if (!itr.hasNext()) {
-            uploadFuture.fail(new Exception("no_file"));
+            uploadPromise.fail(new Exception("no_file"));
         }
 
         FileUpload uploadedFile = itr.next();
@@ -54,31 +55,31 @@ public class Room {
 
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
-            uploadFuture.fail(new Exception("bad_type"));
+            uploadPromise.fail(new Exception("bad_type"));
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
-            uploadFuture.fail(new Exception("too_large"));
+            uploadPromise.fail(new Exception("too_large"));
         }
 
-        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadFuture::complete));
-        return uploadFuture;
+        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadPromise::complete));
+        return uploadPromise.future();
     }
 
     public Future<String> getIndex() {
-        Future<String> indexFuture = Future.future();
-        scheduleOperation(index -> indexFuture.complete(index.getIndexString()));
-        return indexFuture;
+        Promise<String> indexPromise = Promise.promise();
+        scheduleOperation(index -> indexPromise.complete(index.getIndexString()));
+        return indexPromise.future();
     }
 
     public Future<Collection<File>> getFiles() {
-        Future<Collection<File>> fileFuture = Future.future();
-        scheduleOperation(index -> fileFuture.complete(index.getFiles()));
-        return fileFuture;
+        Promise<Collection<File>> filesPromise = Promise.promise();
+        scheduleOperation(index -> filesPromise.complete(index.getFiles()));
+        return filesPromise.future();
     }
 
     public Future<String> deleteFile(int fileIndex) {
-        Future<String> deleteFuture = Future.future();
-        scheduleOperation(index -> index.deleteFile(fileIndex, deleteFuture::complete));
-        return deleteFuture;
+        Promise<String> deletePromise = Promise.promise();
+        scheduleOperation(index -> index.deleteFile(fileIndex, deletePromise::complete));
+        return deletePromise.future();
     }
 }

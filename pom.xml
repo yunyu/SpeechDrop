@@ -12,10 +12,12 @@
         <frontend.directory>frontend</frontend.directory>
         <vertx.verticle>edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle</vertx.verticle>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.testSource>1.8</maven.compiler.testSource>
-        <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.testSource>17</maven.compiler.testSource>
+        <maven.compiler.testTarget>17</maven.compiler.testTarget>
+        <vertx.version>4.5.9</vertx.version>
     </properties>
 
     <build>
@@ -89,7 +91,7 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-stack-depchain</artifactId>
-                <version>3.9.16</version>
+                <version>${vertx.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -104,6 +106,14 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

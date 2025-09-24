@@ -79,8 +79,8 @@ public class IndexHandler {
             entries.set(index, null);
             completedIndex = writeIndex();
             vertx.fileSystem().deleteRecursive(
-                    new File(uploadDirectory, Integer.toString(index)).getPath(), true, null
-            );
+                    new File(uploadDirectory, Integer.toString(index)).getPath(), true
+            ).onFailure(err -> LOGGER.error("Failed to delete uploaded file directory", err));
         } else {
             completedIndex = getIndexString();
         }
@@ -114,8 +114,8 @@ public class IndexHandler {
     private String writeIndex() {
         String indexString = getIndexString();
         vertx.fileSystem().writeFile(indexFile.getPath(),
-                Buffer.buffer(indexString),
-                null);
+                Buffer.buffer(indexString))
+                .onFailure(err -> LOGGER.error("Failed to write index file", err));
         return indexString;
     }
 

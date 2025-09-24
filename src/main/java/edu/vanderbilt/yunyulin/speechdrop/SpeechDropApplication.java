@@ -7,8 +7,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
@@ -89,11 +89,10 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
-        router.route().handler(CookieHandler.create());
         router.route().handler(SessionHandler.create(
                 LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
         ).setSessionTimeout(6 * 60 * 60 * 1000));
-        router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
+        router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
@@ -125,7 +124,7 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar ->
+                r.getIndex().onComplete(ar ->
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
                 );
             }
@@ -137,7 +136,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getFiles().setHandler(ar -> {
+                r.getFiles().onComplete(ar -> {
                     Collection<File> files = ar.result();
                     String outFile = r.getData().name.trim() + ".zip";
 
@@ -154,13 +153,13 @@ public class SpeechDropApplication {
                     if (files.size() == 0) {
                         writeBufferToResponse.handle(Util.getEmptyZipBuffer());
                     } else {
-                        vertx.<Buffer>executeBlocking(fut -> {
+                        vertx.<Buffer>executeBlocking(promise -> {
                             try {
-                                fut.complete(Util.zip(files));
+                                promise.complete(Util.zip(files));
                             } catch (IOException e) {
-                                fut.fail(e);
+                                promise.fail(e);
                             }
-                        }, false, res -> {
+                        }, false).onComplete(res -> {
                             if (res.succeeded()) {
                                 writeBufferToResponse.handle(res.result());
                             } else {
@@ -179,7 +178,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.handleUpload(ctx).setHandler(ar -> {
+                r.handleUpload(ctx).onComplete(ar -> {
                     if (ar.succeeded()) {
                         String index = ar.result();
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
@@ -204,7 +203,7 @@ public class SpeechDropApplication {
                 if (fileIndex == null) {
                     sendEmptyIndex(ctx, 400);
                 } else {
-                    r.deleteFile(Integer.parseInt(fileIndex)).setHandler(ar -> {
+                    r.deleteFile(Integer.parseInt(fileIndex)).onComplete(ar -> {
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
                         broadcaster.publishUpdate(r.getId(), ar.result());
                     });
@@ -230,7 +229,7 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar -> {
+                r.getIndex().onComplete(ar -> {
                     String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
                     JsonObject configPayload = new JsonObject()
                             .put("mediaUrl", mediaUrl)

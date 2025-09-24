@@ -9,6 +9,7 @@ import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import lombok.Getter;
@@ -90,21 +91,29 @@ public class RoomHandler {
 
     public void writeRooms() {
         try {
-            vertx.fileSystem().writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)), null);
+            vertx.fileSystem()
+                    .writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)))
+                    .onFailure(err -> LOGGER.error("Failed to persist rooms metadata", err));
         } catch (JsonProcessingException e) { // This should never happen
             e.printStackTrace();
         }
     }
 
     public Future<Void> queueRoomDeletion(String id) {
-        Future<Void> fut = Future.future();
+        Promise<Void> promise = Promise.promise();
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
             File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, fut.completer());
+            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true).onComplete(ar -> {
+                if (ar.succeeded()) {
+                    promise.complete();
+                } else {
+                    promise.fail(ar.cause());
+                }
+            });
         } else {
-            fut.complete();
+            promise.complete();
         }
-        return fut;
+        return promise.future();
     }
 }

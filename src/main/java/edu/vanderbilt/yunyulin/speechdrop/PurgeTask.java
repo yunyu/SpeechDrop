@@ -1,7 +1,7 @@
 package edu.vanderbilt.yunyulin.speechdrop;
 
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
-import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ public class PurgeTask {
                     .filter(el -> System.currentTimeMillis() - el.getValue().ctime > purgeIntervalInSeconds * 1000)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
-            CompositeFuture.all(
+            Future.all(
                             toRemove.stream()
                                     .map(roomHandler::queueRoomDeletion)
                                     .collect(Collectors.toList()))

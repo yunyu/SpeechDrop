@@ -7,6 +7,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.sockjs.SockJSBridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
@@ -15,28 +16,32 @@ import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 public class Broadcaster {
     private final Vertx vertx;
     private final SockJSHandler sockJSHandler;
+    private final Router sockJSRouter;
 
     private static final String ADDR_PREFIX = "speechdrop.room.";
 
     public Broadcaster(Vertx vertx, RoomHandler roomHandler) {
         this.vertx = vertx;
         this.sockJSHandler = SockJSHandler.create(vertx);
-        sockJSHandler.bridge(new SockJSBridgeOptions().addOutboundPermitted(
+        this.sockJSRouter = sockJSHandler.bridge(new SockJSBridgeOptions().addOutboundPermitted(
                 new PermittedOptions().setAddressRegex("speechdrop\\.room\\..+")
         ), be -> {
             if (be.type() == BridgeEventType.REGISTER) {
                 String address = be.getRawMessage().getString("address");
                 String roomId = getRoomId(address);
                 if (roomId != null && roomHandler.roomExists(roomId)) {
-                    roomHandler.getRoom(roomId).getIndex(index -> {
-                        // Copies envelope structure from EventBusBridgeImpl##deliverMessage
-                        be.socket().write(Buffer.buffer(new JsonObject()
-                                .put("type", "rec")
-                                .put("address", address)
-                                .put("body", index)
-                                .encode()
-                        ));
-                    });
+                    roomHandler.getRoom(roomId).getIndex()
+                            .onSuccess(index -> {
+                                // Copies envelope structure from EventBusBridgeImpl##deliverMessage
+                                be.socket().write(Buffer.buffer(new JsonObject()
+                                        .put("type", "rec")
+                                        .put("address", address)
+                                        .put("body", index)
+                                        .encode()
+                                ));
+                                be.complete(true);
+                            })
+                            .onFailure(err -> be.complete(false));
                     return;
                 } else {
                     be.complete(false);
@@ -62,8 +67,8 @@ public class Broadcaster {
         }
     }
 
-    public SockJSHandler getSockJSHandler() {
-        return sockJSHandler;
+    public Router getSockJSRouter() {
+        return sockJSRouter;
     }
 
     public void publishUpdate(String room, String data) {

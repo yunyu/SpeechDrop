@@ -2,9 +2,7 @@ package edu.vanderbilt.yunyulin.speechdrop.room;
 
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
@@ -19,34 +17,20 @@ public class Room {
     @Getter
     private final RoomData data;
 
-    private final Queue<Handler<IndexHandler>> queuedOperations = new ArrayDeque<>(2);
-    private IndexHandler indexHandler;
+    private final Future<IndexHandler> indexHandlerFuture;
 
     public Room(Vertx vertx, String id, RoomData data) {
         this.id = id;
         this.data = data;
 
-        new IndexHandler(vertx, new File(SpeechDropApplication.BASE_PATH, id)).load(loadedIndex -> {
-            this.indexHandler = loadedIndex;
-            while (!queuedOperations.isEmpty()) {
-                queuedOperations.poll().handle(loadedIndex);
-            }
-        });
+        IndexHandler handler = new IndexHandler(vertx, new File(SpeechDropApplication.BASE_PATH, id));
+        this.indexHandlerFuture = handler.load();
     }
 
-    private void scheduleOperation(Handler<IndexHandler> operation) {
-        if (indexHandler != null) {
-            operation.handle(indexHandler);
-        } else {
-            queuedOperations.offer(operation);
-        }
-    }
-
-    public void handleUpload(RoutingContext ctx, Handler<AsyncResult<String>> handler) {
+    public Future<String> handleUpload(RoutingContext ctx) {
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
         if (!itr.hasNext()) {
-            handler.handle(Future.failedFuture("no_file"));
-            return;
+            return Future.failedFuture("no_file");
         }
 
         FileUpload uploadedFile = itr.next();
@@ -54,27 +38,24 @@ public class Room {
 
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
-            handler.handle(Future.failedFuture("bad_type"));
-            return;
+            return Future.failedFuture("bad_type");
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
-            handler.handle(Future.failedFuture("too_large"));
-            return;
+            return Future.failedFuture("too_large");
         }
 
-        scheduleOperation(index -> index.addFile(uploadedFile, now,
-                newIndex -> handler.handle(Future.succeededFuture(newIndex))));
+        return indexHandlerFuture.compose(index -> index.addFile(uploadedFile, now));
     }
 
-    public void getIndex(Handler<String> handler) {
-        scheduleOperation(index -> handler.handle(index.getIndexString()));
+    public Future<String> getIndex() {
+        return indexHandlerFuture.map(IndexHandler::getIndexString);
     }
 
-    public void getFiles(Handler<Collection<File>> handler) {
-        scheduleOperation(index -> handler.handle(index.getFiles()));
+    public Future<Collection<File>> getFiles() {
+        return indexHandlerFuture.map(index -> new ArrayList<>(index.getFiles()));
     }
 
-    public void deleteFile(int fileIndex, Handler<String> handler) {
-        scheduleOperation(index -> index.deleteFile(fileIndex, handler));
+    public Future<String> deleteFile(int fileIndex) {
+        return indexHandlerFuture.compose(index -> index.deleteFile(fileIndex));
     }
 }

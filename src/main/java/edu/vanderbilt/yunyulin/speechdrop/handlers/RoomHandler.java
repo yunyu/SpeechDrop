@@ -101,7 +101,7 @@ public class RoomHandler {
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
             File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-            return vertx.fileSystem().deleteRecursive(toDelete.getPath(), true);
+            return vertx.fileSystem().deleteRecursive(toDelete.getPath());
         }
         return Future.succeededFuture();
     }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.FileUpload;
@@ -33,58 +33,58 @@ public class IndexHandler {
     private List<FileEntry> entries;
     private boolean loaded = false;
 
-    public void load(Handler<IndexHandler> onComplete) {
-        vertx.fileSystem().readFile(indexFile.getPath(), res -> {
-            if (res.succeeded()) {
-                try {
-                    entries = new ArrayList<>(Arrays.asList(
-                            mapper.readValue(res.result().toString(), FileEntry[].class)
-                    ));
-                } catch (IOException e) { // This should never happen
-                    e.printStackTrace();
-                }
-            } else {
-                entries = new ArrayList<>();
-            }
-            loaded = true;
-            onComplete.handle(this);
-        });
+    public Future<IndexHandler> load() {
+        return vertx.fileSystem().readFile(indexFile.getPath())
+                .compose(buffer -> {
+                    try {
+                        entries = new ArrayList<>(Arrays.asList(
+                                mapper.readValue(buffer.toString(), FileEntry[].class)
+                        ));
+                        loaded = true;
+                        return Future.succeededFuture(this);
+                    } catch (IOException e) {
+                        return Future.failedFuture(e);
+                    }
+                })
+                .recover(err -> {
+                    entries = new ArrayList<>();
+                    loaded = true;
+                    return Future.succeededFuture(this);
+                });
     }
 
-    public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
+    public Future<String> addFile(FileUpload uploadedFile, Date creationTime) {
         checkLoad();
         LOGGER.info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
-        vertx.fileSystem().mkdir(uploadDirectory.getPath(), uploadDirRes -> {
-            File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
-            vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
-                File dest = new File(destDir, uploadedFile.fileName());
-                vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
-                        res -> {
-                            entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
-                            indexHandler.handle(writeIndex());
-                        }
-                );
-            });
-        });
+        File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
+        File dest = new File(destDir, uploadedFile.fileName());
+        return vertx.fileSystem()
+                .mkdirs(uploadDirectory.getPath())
+                .compose(v -> vertx.fileSystem().mkdirs(destDir.getPath()))
+                .compose(v -> vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath()))
+                .compose(v -> {
+                    entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
+                    return writeIndex();
+                });
     }
 
-    public void deleteFile(int index, Handler<String> indexHandler) {
+    public Future<String> deleteFile(int index) {
         checkLoad();
         LOGGER.info("[" + uploadDirectory.getName() + "] Processing delete for index "
                 + index);
-        String completedIndex;
         if (entries.get(index) != null) {
             entries.set(index, null);
-            completedIndex = writeIndex();
-            vertx.fileSystem().deleteRecursive(
-                    new File(uploadDirectory, Integer.toString(index)).getPath(), true, null
-            );
-        } else {
-            completedIndex = getIndexString();
+            String dirToDelete = new File(uploadDirectory, Integer.toString(index)).getPath();
+            return writeIndex()
+                    .compose(indexString -> vertx.fileSystem()
+                            .deleteRecursive(dirToDelete)
+                            .recover(err -> Future.succeededFuture())
+                            .map(v -> indexString)
+                    );
         }
-        indexHandler.handle(completedIndex);
+        return Future.succeededFuture(getIndexString());
     }
 
     public Collection<File> getFiles() {
@@ -111,12 +111,11 @@ public class IndexHandler {
         }
     }
 
-    private String writeIndex() {
+    private Future<String> writeIndex() {
         String indexString = getIndexString();
-        vertx.fileSystem().writeFile(indexFile.getPath(),
-                Buffer.buffer(indexString),
-                null);
-        return indexString;
+        return vertx.fileSystem()
+                .writeFile(indexFile.getPath(), Buffer.buffer(indexString))
+                .map(indexString);
     }
 
     private void checkLoad() {

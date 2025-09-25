@@ -90,21 +90,19 @@ public class RoomHandler {
 
     public void writeRooms() {
         try {
-            vertx.fileSystem().writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)), null);
+            vertx.fileSystem()
+                    .writeFile(roomsFile.getPath(), Buffer.buffer(mapper.writeValueAsString(dataStore)));
         } catch (JsonProcessingException e) { // This should never happen
             e.printStackTrace();
         }
     }
 
     public Future<Void> queueRoomDeletion(String id) {
-        Future<Void> fut = Future.future();
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
             File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true, fut.completer());
-        } else {
-            fut.complete();
+            return vertx.fileSystem().deleteRecursive(toDelete.getPath());
         }
-        return fut;
+        return Future.succeededFuture();
     }
 }

@@ -2,23 +2,22 @@ package edu.vanderbilt.yunyulin.speechdrop;
 
 import edu.vanderbilt.yunyulin.speechdrop.handlers.RoomHandler;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static edu.vanderbilt.yunyulin.speechdrop.Util.HTML_ESCAPER;
@@ -89,17 +88,16 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
-        router.route().handler(CookieHandler.create());
         router.route().handler(SessionHandler.create(
                 LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
         ).setSessionTimeout(6 * 60 * 60 * 1000));
-        router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
+        router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
 
-        router.route("/sock/*").handler(broadcaster.getSockJSHandler());
+        router.route("/sock/*").subRouter(broadcaster.getSockJSRouter());
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 
@@ -125,9 +123,9 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar ->
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
-                );
+                r.getIndex()
+                        .onSuccess(index -> ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index))
+                        .onFailure(err -> ctx.response().setStatusCode(500).end());
             }
         });
 
@@ -137,38 +135,25 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getFiles().setHandler(ar -> {
-                    Collection<File> files = ar.result();
-                    String outFile = r.getData().name.trim() + ".zip";
-
-                    Handler<Buffer> writeBufferToResponse = buf -> ctx.response()
-                            .setChunked(true)
-                            // See https://stackoverflow.com/a/38324508
-                            .putHeader("Content-Disposition", "attachment; filename=\"" + outFile
-                                    .replace("\\", "\\\\")
-                                    .replace("\"", "\\\"") + "\""
-                            )
-                            .putHeader(CONTENT_TYPE, "application/octet-stream")
-                            .end(buf);
-
-                    if (files.size() == 0) {
-                        writeBufferToResponse.handle(Util.getEmptyZipBuffer());
-                    } else {
-                        vertx.<Buffer>executeBlocking(fut -> {
-                            try {
-                                fut.complete(Util.zip(files));
-                            } catch (IOException e) {
-                                fut.fail(e);
+                r.getFiles()
+                        .compose(files -> {
+                            if (files.isEmpty()) {
+                                return Future.succeededFuture(Util.getEmptyZipBuffer());
                             }
-                        }, false, res -> {
-                            if (res.succeeded()) {
-                                writeBufferToResponse.handle(res.result());
-                            } else {
-                                ctx.response().setStatusCode(500).end();
-                            }
-                        });
-                    }
-                });
+                            return vertx.executeBlocking(() -> Util.zip(files), false);
+                        })
+                        .onSuccess(buf -> {
+                            String outFile = r.getData().name.trim() + ".zip";
+                            ctx.response()
+                                    .setChunked(true)
+                                    // See https://stackoverflow.com/a/38324508
+                                    .putHeader("Content-Disposition", "attachment; filename=\"" + outFile
+                                            .replace("\\", "\\\\")
+                                            .replace("\"", "\\\"") + "\"")
+                                    .putHeader(CONTENT_TYPE, "application/octet-stream")
+                                    .end(buf);
+                        })
+                        .onFailure(err -> ctx.response().setStatusCode(500).end());
             }
         });
 
@@ -179,17 +164,14 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.handleUpload(ctx).setHandler(ar -> {
-                    if (ar.succeeded()) {
-                        String index = ar.result();
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
-                        broadcaster.publishUpdate(r.getId(), index);
-                    } else {
-                        ctx.response().setStatusCode(400).end(
-                                new JsonObject().put("err", ar.cause().getMessage()).toString()
-                        );
-                    }
-                });
+                r.handleUpload(ctx)
+                        .onSuccess(index -> {
+                            ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
+                            broadcaster.publishUpdate(r.getId(), index);
+                        })
+                        .onFailure(err -> ctx.response().setStatusCode(400).end(
+                                new JsonObject().put("err", err.getMessage()).toString()
+                        ));
             }
         });
 
@@ -204,10 +186,12 @@ public class SpeechDropApplication {
                 if (fileIndex == null) {
                     sendEmptyIndex(ctx, 400);
                 } else {
-                    r.deleteFile(Integer.parseInt(fileIndex)).setHandler(ar -> {
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
-                        broadcaster.publishUpdate(r.getId(), ar.result());
-                    });
+                    r.deleteFile(Integer.parseInt(fileIndex))
+                            .onSuccess(index -> {
+                                ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
+                                broadcaster.publishUpdate(r.getId(), index);
+                            })
+                            .onFailure(err -> ctx.response().setStatusCode(500).end());
                 }
             }
         });
@@ -230,20 +214,22 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar -> {
-                    String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
-                    JsonObject configPayload = new JsonObject()
-                            .put("mediaUrl", mediaUrl)
-                            .put("roomName", escapedRoomName)
-                            .put("roomId", r.getId())
-                            .put("allowedMimes", allowedMimeTypesCsv)
-                            .put("initialFiles", new JsonArray(ar.result()));
+                r.getIndex()
+                        .onSuccess(index -> {
+                            String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
+                            JsonObject configPayload = new JsonObject()
+                                    .put("mediaUrl", mediaUrl)
+                                    .put("roomName", escapedRoomName)
+                                    .put("roomId", r.getId())
+                                    .put("allowedMimes", allowedMimeTypesCsv)
+                                    .put("initialFiles", new JsonArray(index));
 
-                    ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
-                            roomTemplate
-                                    .replace("<%= ROOM_CONFIG %>", configPayload.encode())
-                    );
-                });
+                            ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
+                                    roomTemplate
+                                            .replace("<%= ROOM_CONFIG %>", configPayload.encode())
+                            );
+                        })
+                        .onFailure(err -> ctx.response().setStatusCode(500).end());
             }
         });
     }

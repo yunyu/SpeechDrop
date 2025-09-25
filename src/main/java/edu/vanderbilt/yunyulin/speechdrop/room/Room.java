@@ -2,8 +2,9 @@ package edu.vanderbilt.yunyulin.speechdrop.room;
 
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
@@ -41,12 +42,11 @@ public class Room {
         }
     }
 
-    public Promise<String> handleUpload(RoutingContext ctx) {
-        Promise<String> uploadPromise = Promise.promise();
-
+    public void handleUpload(RoutingContext ctx, Handler<AsyncResult<String>> handler) {
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
         if (!itr.hasNext()) {
-            uploadPromise.fail(new Exception("no_file"));
+            handler.handle(Future.failedFuture("no_file"));
+            return;
         }
 
         FileUpload uploadedFile = itr.next();
@@ -54,31 +54,27 @@ public class Room {
 
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
-            uploadPromise.fail(new Exception("bad_type"));
+            handler.handle(Future.failedFuture("bad_type"));
+            return;
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
-            uploadPromise.fail(new Exception("too_large"));
+            handler.handle(Future.failedFuture("too_large"));
+            return;
         }
 
-        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadPromise::complete));
-        return uploadPromise;
+        scheduleOperation(index -> index.addFile(uploadedFile, now,
+                newIndex -> handler.handle(Future.succeededFuture(newIndex))));
     }
 
-    public Promise<String> getIndex() {
-        Promise<String> indexPromise = Promise.promise();
-        scheduleOperation(index -> indexPromise.complete(index.getIndexString()));
-        return indexPromise;
+    public void getIndex(Handler<String> handler) {
+        scheduleOperation(index -> handler.handle(index.getIndexString()));
     }
 
-    public Promise<Collection<File>> getFiles() {
-        Promise<Collection<File>> filesPromise = Promise.promise();
-        scheduleOperation(index -> filesPromise.complete(index.getFiles()));
-        return filesPromise;
+    public void getFiles(Handler<Collection<File>> handler) {
+        scheduleOperation(index -> handler.handle(index.getFiles()));
     }
 
-    public Promise<String> deleteFile(int fileIndex) {
-        Promise<String> deletePromise = Promise.promise();
-        scheduleOperation(index -> index.deleteFile(fileIndex, deletePromise::complete));
-        return deletePromise;
+    public void deleteFile(int fileIndex, Handler<String> handler) {
+        scheduleOperation(index -> index.deleteFile(fileIndex, handler));
     }
 }

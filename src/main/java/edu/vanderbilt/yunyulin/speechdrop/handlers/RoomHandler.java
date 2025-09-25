@@ -8,7 +8,7 @@ import com.google.common.cache.LoadingCache;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import lombok.Getter;
@@ -97,15 +97,12 @@ public class RoomHandler {
         }
     }
 
-    public Promise<Void> queueRoomDeletion(String id) {
-        Promise<Void> promise = Promise.promise();
+    public Future<Void> queueRoomDeletion(String id) {
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
             File toDelete = new File(SpeechDropApplication.BASE_PATH, id);
-            vertx.fileSystem().deleteRecursive(toDelete.getPath(), true).onComplete(promise);
-        } else {
-            promise.complete();
+            return vertx.fileSystem().deleteRecursive(toDelete.getPath(), true);
         }
-        return promise;
+        return Future.succeededFuture();
     }
 }

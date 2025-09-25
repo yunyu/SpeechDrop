@@ -124,8 +124,8 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().future().onComplete(ar ->
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
+                r.getIndex(index ->
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index)
                 );
             }
         });
@@ -136,8 +136,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getFiles().future().onComplete(ar -> {
-                    Collection<File> files = ar.result();
+                r.getFiles(files -> {
                     String outFile = r.getData().name.trim() + ".zip";
 
                     Handler<Buffer> writeBufferToResponse = buf -> ctx.response()
@@ -178,7 +177,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.handleUpload(ctx).future().onComplete(ar -> {
+                r.handleUpload(ctx, ar -> {
                     if (ar.succeeded()) {
                         String index = ar.result();
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
@@ -203,9 +202,9 @@ public class SpeechDropApplication {
                 if (fileIndex == null) {
                     sendEmptyIndex(ctx, 400);
                 } else {
-                    r.deleteFile(Integer.parseInt(fileIndex)).future().onComplete(ar -> {
-                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
-                        broadcaster.publishUpdate(r.getId(), ar.result());
+                    r.deleteFile(Integer.parseInt(fileIndex), index -> {
+                        ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(index);
+                        broadcaster.publishUpdate(r.getId(), index);
                     });
                 }
             }
@@ -229,14 +228,14 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().future().onComplete(ar -> {
+                r.getIndex(index -> {
                     String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
                     JsonObject configPayload = new JsonObject()
                             .put("mediaUrl", mediaUrl)
                             .put("roomName", escapedRoomName)
                             .put("roomId", r.getId())
                             .put("allowedMimes", allowedMimeTypesCsv)
-                            .put("initialFiles", new JsonArray(ar.result()));
+                            .put("initialFiles", new JsonArray(index));
 
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
                             roomTemplate

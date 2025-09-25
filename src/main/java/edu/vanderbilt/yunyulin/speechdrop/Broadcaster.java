@@ -28,12 +28,12 @@ public class Broadcaster {
                 String address = be.getRawMessage().getString("address");
                 String roomId = getRoomId(address);
                 if (roomId != null && roomHandler.roomExists(roomId)) {
-                    roomHandler.getRoom(roomId).getIndex().future().onComplete(ar -> {
+                    roomHandler.getRoom(roomId).getIndex(index -> {
                         // Copies envelope structure from EventBusBridgeImpl##deliverMessage
                         be.socket().write(Buffer.buffer(new JsonObject()
                                 .put("type", "rec")
                                 .put("address", address)
-                                .put("body", ar.result())
+                                .put("body", index)
                                 .encode()
                         ));
                     });

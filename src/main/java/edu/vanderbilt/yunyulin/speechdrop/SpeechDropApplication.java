@@ -124,7 +124,7 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().onComplete(ar ->
+                r.getIndex().future().onComplete(ar ->
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
                 );
             }
@@ -136,7 +136,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getFiles().onComplete(ar -> {
+                r.getFiles().future().onComplete(ar -> {
                     Collection<File> files = ar.result();
                     String outFile = r.getData().name.trim() + ".zip";
 
@@ -178,7 +178,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.handleUpload(ctx).onComplete(ar -> {
+                r.handleUpload(ctx).future().onComplete(ar -> {
                     if (ar.succeeded()) {
                         String index = ar.result();
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
@@ -203,7 +203,7 @@ public class SpeechDropApplication {
                 if (fileIndex == null) {
                     sendEmptyIndex(ctx, 400);
                 } else {
-                    r.deleteFile(Integer.parseInt(fileIndex)).onComplete(ar -> {
+                    r.deleteFile(Integer.parseInt(fileIndex)).future().onComplete(ar -> {
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
                         broadcaster.publishUpdate(r.getId(), ar.result());
                     });
@@ -229,7 +229,7 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().onComplete(ar -> {
+                r.getIndex().future().onComplete(ar -> {
                     String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
                     JsonObject configPayload = new JsonObject()
                             .put("mediaUrl", mediaUrl)

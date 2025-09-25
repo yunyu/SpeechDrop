@@ -28,7 +28,7 @@ public class Broadcaster {
                 String address = be.getRawMessage().getString("address");
                 String roomId = getRoomId(address);
                 if (roomId != null && roomHandler.roomExists(roomId)) {
-                    roomHandler.getRoom(roomId).getIndex().onComplete(ar -> {
+                    roomHandler.getRoom(roomId).getIndex().future().onComplete(ar -> {
                         // Copies envelope structure from EventBusBridgeImpl##deliverMessage
                         be.socket().write(Buffer.buffer(new JsonObject()
                                 .put("type", "rec")

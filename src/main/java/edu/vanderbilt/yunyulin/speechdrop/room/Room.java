@@ -2,7 +2,6 @@ package edu.vanderbilt.yunyulin.speechdrop.room;
 
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.handlers.IndexHandler;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -42,7 +41,7 @@ public class Room {
         }
     }
 
-    public Future<String> handleUpload(RoutingContext ctx) {
+    public Promise<String> handleUpload(RoutingContext ctx) {
         Promise<String> uploadPromise = Promise.promise();
 
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
@@ -62,24 +61,24 @@ public class Room {
         }
 
         scheduleOperation(index -> index.addFile(uploadedFile, now, uploadPromise::complete));
-        return uploadPromise.future();
+        return uploadPromise;
     }
 
-    public Future<String> getIndex() {
+    public Promise<String> getIndex() {
         Promise<String> indexPromise = Promise.promise();
         scheduleOperation(index -> indexPromise.complete(index.getIndexString()));
-        return indexPromise.future();
+        return indexPromise;
     }
 
-    public Future<Collection<File>> getFiles() {
+    public Promise<Collection<File>> getFiles() {
         Promise<Collection<File>> filesPromise = Promise.promise();
         scheduleOperation(index -> filesPromise.complete(index.getFiles()));
-        return filesPromise.future();
+        return filesPromise;
     }
 
-    public Future<String> deleteFile(int fileIndex) {
+    public Promise<String> deleteFile(int fileIndex) {
         Promise<String> deletePromise = Promise.promise();
         scheduleOperation(index -> index.deleteFile(fileIndex, deletePromise::complete));
-        return deletePromise.future();
+        return deletePromise;
     }
 }

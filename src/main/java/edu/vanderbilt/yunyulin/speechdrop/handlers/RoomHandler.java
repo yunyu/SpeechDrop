@@ -8,7 +8,6 @@ import com.google.common.cache.LoadingCache;
 import edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication;
 import edu.vanderbilt.yunyulin.speechdrop.room.Room;
 import edu.vanderbilt.yunyulin.speechdrop.room.RoomData;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -98,7 +97,7 @@ public class RoomHandler {
         }
     }
 
-    public Future<Void> queueRoomDeletion(String id) {
+    public Promise<Void> queueRoomDeletion(String id) {
         Promise<Void> promise = Promise.promise();
         if (dataStore.remove(id) != null) {
             roomCache.invalidate(id);
@@ -107,6 +106,6 @@ public class RoomHandler {
         } else {
             promise.complete();
         }
-        return promise.future();
+        return promise;
     }
 }

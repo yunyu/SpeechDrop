@@ -114,7 +114,7 @@ public class SpeechDropApplication {
             if (roomName == null || roomName.length() == 0 || roomName.length() > 60) {
                 redirect(ctx, "/");
             } else {
-                Room r = roomHandler.makeRoom(roomName);
+                Room r = roomHandler.makeRoom(roomName, ctx.request().formAttributes().contains("disable_deletion", "on", true));
                 redirect(ctx, "/" + r.getId());
             }
         });
@@ -198,6 +198,9 @@ public class SpeechDropApplication {
             if (!roomHandler.roomExists(roomId)) {
                 LOGGER.warn("(Upload) Nonexist " + roomId);
                 sendEmptyIndex(ctx, 404);
+            } else if(roomHandler.getRoom(roomId).getData().disableDeletion) {
+                LOGGER.warn("(Delete) Deletion disabled for " + roomId);
+                sendEmptyIndex(ctx, 403);
             } else {
                 Room r = roomHandler.getRoom(roomId);
                 String fileIndex = ctx.request().getFormAttribute("fileIndex");
@@ -237,7 +240,8 @@ public class SpeechDropApplication {
                             .put("roomName", escapedRoomName)
                             .put("roomId", r.getId())
                             .put("allowedMimes", allowedMimeTypesCsv)
-                            .put("initialFiles", new JsonArray(ar.result()));
+                            .put("initialFiles", new JsonArray(ar.result()))
+                            .put("disableDeletion", r.getData().disableDeletion);
 
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(
                             roomTemplate

@@ -42,7 +42,7 @@
         </div>
         <div class="card-wrapper" v-for="fileEntry in fileList" :key="fileEntry.origPos">
             <article class="card">
-                <div @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
+                <div v-if="!disableDeletion" @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
                 <a :href="fileEntry.url" download>
                     <header class="file-header">
                         <h3>{{ fileEntry.name }}</h3>
@@ -67,7 +67,7 @@
         <article>
             <header>
                 <h3>Delete file?</h3>
-                <span class="close delete-button" @click="cancelDelete">&times;</span>
+                <span v-if="!disableDeletion" class="close delete-button" @click="cancelDelete">&times;</span>
             </header>
             <section class="content">
                 Are you sure you want to delete <strong>{{ confirmDeleteFile && confirmDeleteFile.name }}</strong>?
@@ -99,6 +99,7 @@ export default {
     data() {
         return {
             files: roomConfig.initialFiles.slice(),
+            disableDeletion: roomConfig.disableDeletion,
             confirmDeleteFile: null,
             roomName: roomConfig.roomName,
             roomId: roomConfig.roomId,

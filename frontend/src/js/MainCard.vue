@@ -30,6 +30,10 @@
                     placeholder="Type a new room name"
                 >
                 <input class="button" type="submit" value="Make Room">
+                <label class="checkbox-label" style="display:flex;align-items:center;flex-direction:row;gap:8px;">
+                    <input type="checkbox" name="disable_deletion" style="width: 1em">
+                    <span>Disable file deletion</span>
+                </label>
             </form>
         </div>
     </div>

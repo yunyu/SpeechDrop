@@ -13,12 +13,16 @@ import lombok.Data;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 @Data
 public class IndexHandler {
     private static final ObjectMapper mapper = new ObjectMapper();
+    public static final String DEFAULT_FOLDER = "other";
+    private static final Set<String> ALLOWED_FOLDERS = new HashSet<>(Arrays.asList("aff", "neg", "other"));
+    private static final Pattern UNSAFE_FILENAME_CHARS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
 
     private final Vertx vertx;
     private final File uploadDirectory;
@@ -51,18 +55,20 @@ public class IndexHandler {
         });
     }
 
-    public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
+    public void addFile(FileUpload uploadedFile, Date creationTime, String desiredName, String desiredFolder, Handler<String> indexHandler) {
         checkLoad();
+        String safeFileName = chooseSafeFilename(uploadedFile.fileName(), desiredName);
+        String safeFolder = normalizeFolder(desiredFolder);
         LOGGER.info("[" + uploadDirectory.getName() + "] Processing upload "
-                + uploadedFile.fileName()
+                + safeFileName
                 + " (" + uploadedFile.size() + ")");
         vertx.fileSystem().mkdir(uploadDirectory.getPath(), uploadDirRes -> {
             File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
             vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
-                File dest = new File(destDir, uploadedFile.fileName());
+                File dest = new File(destDir, safeFileName);
                 vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
                         res -> {
-                            entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
+                            entries.add(new FileEntry(dest.getName(), creationTime.getTime(), safeFolder));
                             indexHandler.handle(writeIndex());
                         }
                 );
@@ -123,15 +129,47 @@ public class IndexHandler {
         if (!loaded) throw new IllegalStateException("Index not loaded");
     }
 
+    private static String normalizeFolder(String folder) {
+        if (folder == null) return DEFAULT_FOLDER;
+        String normalized = folder.trim().toLowerCase(Locale.ROOT);
+        if (!ALLOWED_FOLDERS.contains(normalized)) {
+            return DEFAULT_FOLDER;
+        }
+        return normalized;
+    }
+
+    private static String chooseSafeFilename(String uploadedName, String desiredName) {
+        String fallback = sanitizeFilename(uploadedName);
+        String chosen = sanitizeFilename(desiredName);
+        if (chosen.isEmpty()) return fallback;
+        if (!chosen.contains(".")) {
+            int dotIndex = fallback.lastIndexOf('.');
+            if (dotIndex > 0 && dotIndex < fallback.length() - 1) {
+                chosen += fallback.substring(dotIndex);
+            }
+        }
+        return chosen;
+    }
+
+    private static String sanitizeFilename(String value) {
+        if (value == null) return "";
+        String base = new File(value).getName().trim();
+        String cleaned = UNSAFE_FILENAME_CHARS.matcher(base).replaceAll("_");
+        return cleaned.isEmpty() ? "" : cleaned;
+    }
+
     private static class FileEntry {
         public String name;
         public long ctime;
+        public String folder;
 
         @JsonCreator
         public FileEntry(@JsonProperty("name") String name,
-                         @JsonProperty("ctime") long ctime) {
+                         @JsonProperty("ctime") long ctime,
+                         @JsonProperty("folder") String folder) {
             this.name = name;
             this.ctime = ctime;
+            this.folder = normalizeFolder(folder);
         }
     }
 }

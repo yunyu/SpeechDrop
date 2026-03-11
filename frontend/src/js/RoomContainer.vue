@@ -20,47 +20,64 @@
         <div class="room-divider"></div>
         <span class="room-code">{{ roomId }}</span>
     </div>
-    <transition-group
-        id="file-grid"
-        name="grid-entries"
-        class="flex two three-800 five-1200 six-1800 seven-2000"
-        tag="div"
-    >
-        <div class="card-wrapper upload-wrapper" :key="-1">
-            <article class="card upload-card">
-                <div id="file-dropzone">
+
+    <div class="folder-grid">
+        <section v-for="folder in folderConfig" :key="folder.id" class="folder-section card">
+            <header class="folder-header">
+                <h3>{{ folder.label }}</h3>
+            </header>
+            <div class="folder-upload-slot">
+                <div :id="`file-dropzone-${folder.id}`" class="folder-dropzone">
                     <img
                         class="passthrough-pointer"
                         :src="uploadIcon"
-                        width="80"
-                        height="80"
+                        width="40"
+                        height="40"
                         alt="Upload icon"
                     />
-                    <p id="upload-text" class="passthrough-pointer"></p>
+                    <p class="upload-text passthrough-pointer"></p>
                 </div>
-            </article>
-        </div>
-        <div class="card-wrapper" v-for="fileEntry in fileList" :key="fileEntry.origPos">
-            <article class="card">
-                <div @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
-                <a :href="fileEntry.url" download>
-                    <header class="file-header">
-                        <h3>{{ fileEntry.name }}</h3>
-                        <div class="file-date">{{ fileEntry.formattedDate }}</div>
-                    </header>
-                </a>
-                <div class="card-button-container">
-                    <a
-                        target="_blank"
-                        rel="noopener"
-                        :href="`https://docs.google.com/gview?url=${fileEntry.url}`"
-                        class="half card-button card-button-left"
-                    >Preview</a>
-                    <a :href="fileEntry.url" class="half card-button" download>Download</a>
+            </div>
+            <transition-group
+                :id="`folder-grid-${folder.id}`"
+                name="grid-entries"
+                class="folder-files"
+                tag="div"
+            >
+                <div class="card-wrapper" v-for="fileEntry in groupedFiles[folder.id]" :key="fileEntry.origPos">
+                    <article class="card file-card">
+                        <div @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
+                        <a :href="fileEntry.url" download>
+                            <div class="file-thumbnail">
+                                <iframe
+                                    :src="fileEntry.thumbnailUrl"
+                                    title="Document thumbnail"
+                                    loading="lazy"
+                                    sandbox="allow-same-origin allow-scripts"
+                                ></iframe>
+                            </div>
+                        </a>
+                        <a :href="fileEntry.url" download>
+                            <header class="file-header">
+                                <h3>{{ fileEntry.name }}</h3>
+                                <div class="file-date">{{ fileEntry.formattedDate }}</div>
+                            </header>
+                        </a>
+                        <div class="card-button-container">
+                            <a
+                                target="_blank"
+                                rel="noopener"
+                                :href="fileEntry.viewerUrl"
+                                class="half card-button card-button-left"
+                            >Preview</a>
+                            <a :href="fileEntry.url" class="half card-button" download>Download</a>
+                        </div>
+                    </article>
                 </div>
-            </article>
-        </div>
-    </transition-group>
+            </transition-group>
+        </section>
+    </div>
+
     <div class="modal">
         <input id="modal_1" type="checkbox" :checked="confirmDeleteFile !== null" @change="onConfirmModalChange" />
         <label for="modal_1" class="overlay"></label>
@@ -91,8 +108,23 @@ import uploadIcon from '../static/img/upload-icon.svg';
 Dropzone.autoDiscover = false;
 
 const roomConfig = window.roomConfig;
+const folderConfig = [
+    { id: 'aff', label: 'Aff' },
+    { id: 'neg', label: 'Neg' },
+    { id: 'other', label: 'Other' }
+];
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
+
+const normalizeFolder = folder => {
+    const normalized = String(folder || '').toLowerCase();
+    if (normalized === 'aff' || normalized === 'neg' || normalized === 'other') {
+        return normalized;
+    }
+    return 'other';
+};
+
+const buildViewerUrl = fileUrl => `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(fileUrl)}`;
 
 export default {
     name: 'RoomContainer',
@@ -106,6 +138,7 @@ export default {
             allowedMimes: roomConfig.allowedMimes,
             prevFilesJson: JSON.stringify(roomConfig.initialFiles),
             _onKeydown: null,
+            folderConfig,
             downloadFolderIcon,
             uploadIcon
         };
@@ -129,49 +162,66 @@ export default {
         eb.enableReconnect(true);
 
         const setUploadText = (dropzoneElement, text) => {
-            dropzoneElement.getElementsByTagName('p')[0].innerHTML = text;
+            const textNode = dropzoneElement.getElementsByTagName('p')[0];
+            if (textNode) {
+                textNode.innerHTML = text;
+            }
         };
 
         const resetDropzone = dropzoneElement => {
             setUploadText(dropzoneElement, 'Drag files here or click to upload');
-            dropzoneElement.className = 'dz-clickable';
+            dropzoneElement.className = 'folder-dropzone dz-clickable';
+        };
+
+        const promptForRename = file => {
+            const proposed = window.prompt('Rename file before upload (optional):', file.name);
+            if (proposed === null) {
+                return file.name;
+            }
+            return proposed.trim() || file.name;
         };
 
         this.$nextTick(() => {
-            const dropCard = new Dropzone('div#file-dropzone', {
-                url: `/${this.roomId}/upload`,
-                addedfile() {},
-                uploadprogress: (file, progress) => {
-                    setUploadText(dropCard.element, `Uploading (${Math.floor(progress)}%)`);
-                },
-                success: (file, successMsg) => {
-                    resetDropzone(dropCard.element);
-                    setUploadText(dropCard.element, 'Upload successful!');
-                    dropCard.element.className += ' dropzone-success';
-                    this.updateFiles(JSON.stringify(successMsg));
-                    setTimeout(() => {
+            this.folderConfig.forEach(folder => {
+                const dropCard = new Dropzone(`div#file-dropzone-${folder.id}`, {
+                    url: `/${this.roomId}/upload`,
+                    addedfile(file) {
+                        file._speechdropRenamedName = promptForRename(file);
+                    },
+                    uploadprogress: (file, progress) => {
+                        setUploadText(dropCard.element, `Uploading (${Math.floor(progress)}%)`);
+                    },
+                    success: (file, successMsg) => {
                         resetDropzone(dropCard.element);
-                    }, 2000);
-                },
-                error: (file, errorMsg) => {
-                    resetDropzone(dropCard.element);
-                    setUploadText(dropCard.element, 'Upload failed, please retry.');
-                    dropCard.element.className += ' dropzone-fail';
-                    console.log(errorMsg);
-                    setTimeout(() => {
+                        setUploadText(dropCard.element, 'Upload successful!');
+                        dropCard.element.className += ' dropzone-success';
+                        this.updateFiles(JSON.stringify(successMsg));
+                        setTimeout(() => {
+                            resetDropzone(dropCard.element);
+                        }, 2000);
+                    },
+                    error: (file, errorMsg) => {
                         resetDropzone(dropCard.element);
-                    }, 2000);
-                },
-                sending: (file, xhr, formData) => {
-                    formData.append('X-XSRF-TOKEN', getCsrfToken());
-                    ga('send', 'event', 'Room', 'upload', this.roomId);
-                },
-                createImageThumbnails: false,
-                maxFilesize: 10,
-                uploadMultiple: false,
-                acceptedFiles: this.allowedMimes
+                        setUploadText(dropCard.element, 'Upload failed, please retry.');
+                        dropCard.element.className += ' dropzone-fail';
+                        console.log(errorMsg);
+                        setTimeout(() => {
+                            resetDropzone(dropCard.element);
+                        }, 2000);
+                    },
+                    sending: (file, xhr, formData) => {
+                        formData.append('X-XSRF-TOKEN', getCsrfToken());
+                        formData.append('folder', folder.id);
+                        formData.append('renamedFile', file._speechdropRenamedName || file.name);
+                        ga('send', 'event', 'Room', 'upload', this.roomId);
+                    },
+                    createImageThumbnails: false,
+                    maxFilesize: 10,
+                    uploadMultiple: false,
+                    acceptedFiles: this.allowedMimes
+                });
+                resetDropzone(dropCard.element);
             });
-            resetDropzone(dropCard.element);
         });
 
         // Close confirmation modal on Escape key
@@ -242,12 +292,25 @@ export default {
             for (let i = 0; i < this.files.length; i++) {
                 const currEl = this.files[i];
                 if (!currEl) continue;
-                currEl.url = `${baseUrl}/${i}/${currEl.name}`;
-                currEl.origPos = i;
-                currEl.formattedDate = formatDate(currEl.ctime);
-                processed.unshift(currEl);
+                const url = `${baseUrl}/${i}/${currEl.name}`;
+                processed.unshift({
+                    ...currEl,
+                    url,
+                    origPos: i,
+                    folder: normalizeFolder(currEl.folder),
+                    formattedDate: formatDate(currEl.ctime),
+                    viewerUrl: buildViewerUrl(url),
+                    thumbnailUrl: buildViewerUrl(url)
+                });
             }
             return processed;
+        },
+        groupedFiles() {
+            const groups = { aff: [], neg: [], other: [] };
+            this.fileList.forEach(file => {
+                groups[file.folder].push(file);
+            });
+            return groups;
         }
     }
 };

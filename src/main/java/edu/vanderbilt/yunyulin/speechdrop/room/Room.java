@@ -47,20 +47,25 @@ public class Room {
         Iterator<FileUpload> itr = ctx.fileUploads().iterator();
         if (!itr.hasNext()) {
             uploadFuture.fail(new Exception("no_file"));
+            return uploadFuture;
         }
 
         FileUpload uploadedFile = itr.next();
         Date now = new Date();
+        String desiredName = ctx.request().getFormAttribute("renamedFile");
+        String desiredFolder = ctx.request().getFormAttribute("folder");
 
         String mimeType = uploadedFile.contentType();
         if (!SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
             uploadFuture.fail(new Exception("bad_type"));
+            return uploadFuture;
         }
         if (uploadedFile.size() > SpeechDropApplication.maxUploadSize) {
             uploadFuture.fail(new Exception("too_large"));
+            return uploadFuture;
         }
 
-        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadFuture::complete));
+        scheduleOperation(index -> index.addFile(uploadedFile, now, desiredName, desiredFolder, uploadFuture::complete));
         return uploadFuture;
     }
 

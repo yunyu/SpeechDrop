@@ -96,7 +96,7 @@ export default {
                 r.onload = () => {
                     if (r.status !== 200) {
                         this.codeInputClass = 'input-invalid';
-                        this.hint = '<span style="color:#b72a2a">Invalid room code</span>';
+                        this.hint = '<span style="color:#555">Invalid room code</span>';
                     } else {
                         window.location.href = `/${val}`;
                         this.hint = 'Taking you there...';

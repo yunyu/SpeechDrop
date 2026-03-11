@@ -13,8 +13,9 @@
 @import '~picnic/src/plugins/modal/plugin';
 
 body {
-    background-color: whitesmoke;
+    background-color: #f1f1f1;
     font-family: 'Open Sans', sans-serif;
+    color: #111;
 }
 
 nav .brand {
@@ -31,11 +32,12 @@ h3 {
         0 0 0 1px rgba(10, 10, 10, 0.05);
     border: none;
     margin-bottom: 0;
+    background: #fff;
 }
 
 @supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
     nav {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(245, 245, 245, 0.85);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
     }
@@ -43,4 +45,40 @@ h3 {
 
 .card header, .modal .overlay~* header {
     border-bottom: 1px solid #eee;
+}
+
+a {
+    color: #111;
+}
+
+a:hover,
+a:focus {
+    color: #000;
+}
+
+button,
+.button,
+input[type='submit'] {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+button:hover,
+.button:hover,
+input[type='submit']:hover {
+    background: #303030;
+    border-color: #303030;
+}
+
+.pseudo.button,
+.button.pseudo {
+    color: #222;
+    background: #e8e8e8;
+    border-color: #d5d5d5;
+}
+
+.dangerous {
+    background: #2f2f2f;
+    border-color: #2f2f2f;
 }

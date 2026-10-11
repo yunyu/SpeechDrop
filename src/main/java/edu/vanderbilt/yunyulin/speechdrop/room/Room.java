@@ -56,8 +56,8 @@ public class Room {
         String mimeType = uploadedFile.contentType();
         // CardMirror files may have an empty or generic browser MIME type.
         String fileName = uploadedFile.fileName();
-        boolean isCardMirror = fileName != null && fileName.toLowerCase(Locale.ROOT).endsWith(".cmir");
-        if (!isCardMirror && !SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
+        boolean isPermittedExtension = fileName != null && fileName.toLowerCase(Locale.ROOT).endsWith(".cmir");
+        if (!isPermittedExtension && !SpeechDropApplication.allowedMimeTypes.contains(mimeType)) {
             uploadFuture.fail(new Exception("bad_type"));
             return uploadFuture;
         }

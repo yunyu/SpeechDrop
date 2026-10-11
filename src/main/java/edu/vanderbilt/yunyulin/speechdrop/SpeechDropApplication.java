@@ -32,7 +32,6 @@ public class SpeechDropApplication {
     public static final File BASE_PATH = new File("public" + File.separator + "uploads");
     public static final Logger LOGGER = LoggerFactory.getLogger(SpeechDropApplication.class.getName());
 
-    // private static final List<String> allowedExtensions = Arrays.asList("doc", "docx", "odt", "pdf", "txt", "rtf");
     public static final List<String> allowedMimeTypes = Arrays.asList(
             "application/msword", // doc
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // docx
@@ -69,7 +68,7 @@ public class SpeechDropApplication {
         broadcaster = new Broadcaster(vertx, roomHandler);
 
         // Initialize templates
-        this.allowedMimeTypesCsv = String.join(",", allowedMimeTypes);
+        this.allowedMimeTypesCsv = String.join(",", allowedMimeTypes) + ",.cmir";
         this.mainPage = mainPage;
         this.roomTemplate = roomTemplate;
         this.aboutPage = aboutPage;

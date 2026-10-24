@@ -56,13 +56,16 @@ public class IndexHandler {
         LOGGER.info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
                 + " (" + uploadedFile.size() + ")");
+        // Reserve the index before asynchronous copies so concurrent uploads use distinct directories.
+        final int fileIndex = entries.size();
+        entries.add(null);
         vertx.fileSystem().mkdir(uploadDirectory.getPath(), uploadDirRes -> {
-            File destDir = new File(uploadDirectory, Integer.toString(entries.size()));
+            File destDir = new File(uploadDirectory, Integer.toString(fileIndex));
             vertx.fileSystem().mkdir(destDir.getPath(), mkdirRes -> {
                 File dest = new File(destDir, uploadedFile.fileName());
                 vertx.fileSystem().copy(uploadedFile.uploadedFileName(), dest.getPath(),
                         res -> {
-                            entries.add(new FileEntry(dest.getName(), creationTime.getTime()));
+                            entries.set(fileIndex, new FileEntry(dest.getName(), creationTime.getTime()));
                             indexHandler.handle(writeIndex());
                         }
                 );

@@ -31,10 +31,3 @@ Production setup
 8. Copy JAR to destination directory and switch to it
 9. Run `java -Dfile.encoding=UTF-8 -jar SpeechDrop-1.0-SNAPSHOT.jar -conf config.json`
 10. Visit site
-
-Build tools
---
-
-Use a current Maven 3.x installation from your package manager. Maven installs Node 22.19.0 and uses Corepack to run Yarn 4.18.1, pinned in `frontend/package.json`. The frontend uses the `node-modules` linker.
-
-For frontend-only work, use Node 22.19.0 with Corepack enabled, then run `yarn install --immutable` and `yarn build` in `frontend/`. After changing dependencies, run `yarn install` and commit the updated `yarn.lock`. To audit all frontend dependencies, run `yarn npm audit --all --recursive`.

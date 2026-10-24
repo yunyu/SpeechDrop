@@ -12,7 +12,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
-import io.vertx.ext.web.sstore.LocalSessionStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,9 +87,8 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
-        router.route().handler(SessionHandler.create(
-                LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
-        ).setSessionTimeout(6 * 60 * 60 * 1000));
+        // No authenticated sessions: use signed double-submit CSRF tokens so parallel uploads
+        // and multiple tabs do not invalidate each other's tokens.
         router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->

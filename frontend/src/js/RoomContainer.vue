@@ -94,7 +94,7 @@ Dropzone.autoDiscover = false;
 const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
-const uploadOwnership = createUploadOwnershipStore(roomConfig.roomId);
+const uploadOwnership = createUploadOwnershipStore(roomConfig.roomId, roomConfig.purgeIntervalInSeconds);
 
 export default {
     name: 'RoomContainer',

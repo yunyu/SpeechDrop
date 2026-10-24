@@ -67,7 +67,10 @@ public class Room {
             return uploadFuture.future();
         }
 
-        scheduleOperation(index -> index.addFile(uploadedFile, now, uploadFuture::complete));
+        scheduleOperation(index -> {
+            int fileIndex = index.addFile(uploadedFile, now, uploadFuture::complete);
+            ctx.response().putHeader("X-Uploaded-File-Index", Integer.toString(fileIndex));
+        });
         return uploadFuture.future();
     }
 

@@ -42,7 +42,7 @@
         </div>
         <div class="card-wrapper" v-for="fileEntry in fileList" :key="fileEntry.origPos">
             <article class="card">
-                <div @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
+                <div v-if="ownsFile(fileEntry.origPos)" @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
                 <a :href="fileEntry.url" download>
                     <header class="file-header">
                         <h3>{{ fileEntry.name }}</h3>
@@ -84,6 +84,7 @@
 import Dropzone from 'dropzone';
 import Cookies from 'js-cookie';
 import EventBus from 'vertx3-eventbus-client';
+import { createUploadOwnershipStore } from './uploadOwnership';
 
 import downloadFolderIcon from '../static/img/download-folder.svg';
 import uploadIcon from '../static/img/upload-icon.svg';
@@ -93,12 +94,14 @@ Dropzone.autoDiscover = false;
 const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
+const uploadOwnership = createUploadOwnershipStore(roomConfig.roomId, roomConfig.purgeIntervalInSeconds);
 
 export default {
     name: 'RoomContainer',
     data() {
         return {
             files: roomConfig.initialFiles.slice(),
+            ownedUploads: uploadOwnership.read(),
             confirmDeleteFile: null,
             roomName: roomConfig.roomName,
             roomId: roomConfig.roomId,
@@ -148,6 +151,11 @@ export default {
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, 'Upload successful!');
                     dropCard.element.className += ' dropzone-success';
+                    const indexHeader = file.xhr.getResponseHeader('X-Uploaded-File-Index');
+                    const fileIndex = indexHeader === null ? -1 : Number(indexHeader);
+                    if (Number.isInteger(fileIndex) && fileIndex >= 0 && successMsg[fileIndex]) {
+                        this.rememberUpload(fileIndex);
+                    }
                     this.updateFiles(JSON.stringify(successMsg));
                     setTimeout(() => {
                         resetDropzone(dropCard.element);
@@ -182,25 +190,48 @@ export default {
             }
         };
         document.addEventListener('keydown', this._onKeydown);
+        this._onStorage = event => {
+            if (uploadOwnership.handlesStorageEvent(event)) {
+                this.ownedUploads = uploadOwnership.read();
+                if (this.confirmDeleteFile && !this.ownsFile(this.confirmDeleteFile.origPos)) {
+                    this.cancelDelete();
+                }
+            }
+        };
+        window.addEventListener('storage', this._onStorage);
     },
     beforeUnmount() {
         if (this._onKeydown) {
             document.removeEventListener('keydown', this._onKeydown);
         }
+        window.removeEventListener('storage', this._onStorage);
     },
     methods: {
+        ownsFile(index) {
+            return Boolean(this.ownedUploads[index]);
+        },
+        rememberUpload(index) {
+            this.ownedUploads = uploadOwnership.add(index);
+        },
         deleteFile(fileIndex) {
+            if (!this.ownsFile(fileIndex)) return;
             const r = new XMLHttpRequest();
             r.open('POST', `/${this.roomId}/delete`, true);
             this.files.splice(fileIndex, 1, null);
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
-            r.onload = () => this.updateFiles(r.response);
+            r.onload = () => {
+                if (r.status === 200) {
+                    this.ownedUploads = uploadOwnership.remove(fileIndex);
+                }
+                this.updateFiles(r.response);
+            };
             r.send(data);
             ga('send', 'event', 'Room', 'delete', this.roomId);
         },
         promptDelete(fileEntry) {
+            if (!this.ownsFile(fileEntry.origPos)) return;
             this.confirmDeleteFile = fileEntry;
         },
         confirmDelete() {

@@ -233,6 +233,7 @@ public class SpeechDropApplication {
                             .put("roomName", escapedRoomName)
                             .put("roomId", r.getId())
                             .put("allowedMimes", allowedMimeTypesCsv)
+                            .put("purgeIntervalInSeconds", config.getInteger("purgeIntervalInSeconds"))
                             .put("initialFiles", new JsonArray(ar.result()));
 
                     ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(

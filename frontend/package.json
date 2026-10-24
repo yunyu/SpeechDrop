@@ -3,6 +3,7 @@
     "version": "1.0.0-SNAPSHOT",
     "author": "Yunyu Lin <yl@vanderbilt.edu>",
     "license": "MIT",
+    "packageManager": "yarn@4.18.1",
     "devDependencies": {
         "@babel/core": "^7.24.7",
         "@babel/preset-env": "^7.24.7",

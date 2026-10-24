@@ -26,32 +26,34 @@
                 <version>1.15.1</version>
                 <configuration>
                     <workingDirectory>${frontend.directory}</workingDirectory>
-                    <yarnInheritsProxyConfigFromMaven>false</yarnInheritsProxyConfigFromMaven>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>install node and yarn</id>
+                        <id>install node and corepack</id>
                         <goals>
-                            <goal>install-node-and-yarn</goal>
+                            <goal>install-node-and-corepack</goal>
                         </goals>
                         <configuration>
                             <nodeVersion>v22.19.0</nodeVersion>
-                            <yarnVersion>v1.22.11</yarnVersion>
+                            <corepackVersion>v0.34.6</corepackVersion>
                         </configuration>
                     </execution>
                     <execution>
                         <id>yarn install</id>
                         <goals>
-                            <goal>yarn</goal>
+                            <goal>corepack</goal>
                         </goals>
+                        <configuration>
+                            <arguments>yarn install --immutable</arguments>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>yarn run build</id>
                         <goals>
-                            <goal>yarn</goal>
+                            <goal>corepack</goal>
                         </goals>
                         <configuration>
-                            <arguments>run build</arguments>
+                            <arguments>yarn run build</arguments>
                         </configuration>
                     </execution>
                 </executions>

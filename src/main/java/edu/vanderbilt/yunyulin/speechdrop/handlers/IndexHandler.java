@@ -51,7 +51,7 @@ public class IndexHandler {
         });
     }
 
-    public void addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
+    public int addFile(FileUpload uploadedFile, Date creationTime, Handler<String> indexHandler) {
         checkLoad();
         LOGGER.info("[" + uploadDirectory.getName() + "] Processing upload "
                 + uploadedFile.fileName()
@@ -71,6 +71,7 @@ public class IndexHandler {
                 );
             });
         });
+        return fileIndex;
     }
 
     public void deleteFile(int index, Handler<String> indexHandler) {

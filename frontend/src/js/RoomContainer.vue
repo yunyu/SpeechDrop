@@ -42,7 +42,7 @@
         </div>
         <div class="card-wrapper" v-for="fileEntry in fileList" :key="fileEntry.origPos">
             <article class="card">
-                <div @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
+                <div v-if="ownsFile(fileEntry.origPos)" @click.self="promptDelete(fileEntry)" class="delete-button">&#215;</div>
                 <a :href="fileEntry.url" download>
                     <header class="file-header">
                         <h3>{{ fileEntry.name }}</h3>
@@ -93,12 +93,27 @@ Dropzone.autoDiscover = false;
 const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
+const uploadStoragePrefix = roomId => `speechdrop:uploads:${roomId}:`;
+const readOwnedUploads = roomId => {
+    const owned = {};
+    const prefix = uploadStoragePrefix(roomId);
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(prefix)) owned[key.slice(prefix.length)] = true;
+        }
+    } catch (_) {
+        // Keep uploads usable when browser storage is unavailable.
+    }
+    return owned;
+};
 
 export default {
     name: 'RoomContainer',
     data() {
         return {
             files: roomConfig.initialFiles.slice(),
+            ownedUploads: readOwnedUploads(roomConfig.roomId),
             confirmDeleteFile: null,
             roomName: roomConfig.roomName,
             roomId: roomConfig.roomId,
@@ -148,6 +163,11 @@ export default {
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, 'Upload successful!');
                     dropCard.element.className += ' dropzone-success';
+                    const indexHeader = file.xhr.getResponseHeader('X-Uploaded-File-Index');
+                    const fileIndex = indexHeader === null ? -1 : Number(indexHeader);
+                    if (Number.isInteger(fileIndex) && fileIndex >= 0 && successMsg[fileIndex]) {
+                        this.rememberUpload(fileIndex);
+                    }
                     this.updateFiles(JSON.stringify(successMsg));
                     setTimeout(() => {
                         resetDropzone(dropCard.element);
@@ -182,25 +202,58 @@ export default {
             }
         };
         document.addEventListener('keydown', this._onKeydown);
+        this._onStorage = event => {
+            if (event.key === null || event.key.startsWith(uploadStoragePrefix(this.roomId))) {
+                this.ownedUploads = readOwnedUploads(this.roomId);
+                if (this.confirmDeleteFile && !this.ownsFile(this.confirmDeleteFile.origPos)) {
+                    this.cancelDelete();
+                }
+            }
+        };
+        window.addEventListener('storage', this._onStorage);
     },
     beforeUnmount() {
         if (this._onKeydown) {
             document.removeEventListener('keydown', this._onKeydown);
         }
+        window.removeEventListener('storage', this._onStorage);
     },
     methods: {
+        ownsFile(index) {
+            return Boolean(this.ownedUploads[index]);
+        },
+        rememberUpload(index) {
+            this.ownedUploads[index] = true;
+            try {
+                localStorage.setItem(uploadStoragePrefix(this.roomId) + index, '1');
+            } catch (_) {
+                // Ownership still works in this tab until it is closed or reloaded.
+            }
+        },
         deleteFile(fileIndex) {
+            if (!this.ownsFile(fileIndex)) return;
             const r = new XMLHttpRequest();
             r.open('POST', `/${this.roomId}/delete`, true);
             this.files.splice(fileIndex, 1, null);
             const data = `fileIndex=${fileIndex}`;
             r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
-            r.onload = () => this.updateFiles(r.response);
+            r.onload = () => {
+                if (r.status === 200) {
+                    delete this.ownedUploads[fileIndex];
+                    try {
+                        localStorage.removeItem(uploadStoragePrefix(this.roomId) + fileIndex);
+                    } catch (_) {
+                        // Browser storage is optional.
+                    }
+                }
+                this.updateFiles(r.response);
+            };
             r.send(data);
             ga('send', 'event', 'Room', 'delete', this.roomId);
         },
         promptDelete(fileEntry) {
+            if (!this.ownsFile(fileEntry.origPos)) return;
             this.confirmDeleteFile = fileEntry;
         },
         confirmDelete() {

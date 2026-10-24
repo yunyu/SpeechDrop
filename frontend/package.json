@@ -25,6 +25,9 @@
         "webpack": "^5.104.1",
         "webpack-cli": "^5.1.4"
     },
+    "resolutions": {
+        "websocket-driver": "^0.7.5"
+    },
     "scripts": {
         "build": "webpack --mode production"
     }

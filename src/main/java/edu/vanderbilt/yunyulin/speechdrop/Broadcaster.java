@@ -7,28 +7,29 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSBridgeOptions;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
 import static edu.vanderbilt.yunyulin.speechdrop.SpeechDropApplication.LOGGER;
 
 public class Broadcaster {
     private final Vertx vertx;
-    private final SockJSHandler sockJSHandler;
+    private final Router sockJSHandler;
 
     private static final String ADDR_PREFIX = "speechdrop.room.";
 
     public Broadcaster(Vertx vertx, RoomHandler roomHandler) {
         this.vertx = vertx;
-        this.sockJSHandler = SockJSHandler.create(vertx);
-        sockJSHandler.bridge(new BridgeOptions().addOutboundPermitted(
+
+        this.sockJSHandler = SockJSHandler.create(vertx).bridge(new SockJSBridgeOptions().addOutboundPermitted(
                 new PermittedOptions().setAddressRegex("speechdrop\\.room\\..+")
         ), be -> {
             if (be.type() == BridgeEventType.REGISTER) {
                 String address = be.getRawMessage().getString("address");
                 String roomId = getRoomId(address);
                 if (roomId != null && roomHandler.roomExists(roomId)) {
-                    roomHandler.getRoom(roomId).getIndex().setHandler(ar -> {
+                    roomHandler.getRoom(roomId).getIndex().onComplete(ar -> {
                         // Copies envelope structure from EventBusBridgeImpl##deliverMessage
                         be.socket().write(Buffer.buffer(new JsonObject()
                                 .put("type", "rec")
@@ -61,7 +62,7 @@ public class Broadcaster {
         }
     }
 
-    public SockJSHandler getSockJSHandler() {
+    public Router getSockJSHandler() {
         return sockJSHandler;
     }
 

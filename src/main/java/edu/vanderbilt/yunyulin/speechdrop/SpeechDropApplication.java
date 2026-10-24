@@ -12,7 +12,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
-import io.vertx.ext.web.sstore.LocalSessionStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,17 +87,15 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
-        router.route().handler(CookieHandler.create());
-        router.route().handler(SessionHandler.create(
-                LocalSessionStore.create(vertx, "speechdrop-sessions", 10000L)
-        ).setSessionTimeout(6 * 60 * 60 * 1000));
-        router.route().handler(CSRFHandler.create(config.getString("csrfSecret")));
+        // No authenticated sessions: use signed double-submit CSRF tokens so parallel uploads
+        // and multiple tabs do not invalidate each other's tokens.
+        router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
 
-        router.route("/sock/*").handler(broadcaster.getSockJSHandler());
+        router.route("/sock/*").subRouter(broadcaster.getSockJSHandler());
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 
@@ -124,7 +121,7 @@ public class SpeechDropApplication {
                 sendEmptyIndex(ctx, 404);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar ->
+                r.getIndex().onComplete(ar ->
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result())
                 );
             }
@@ -136,7 +133,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end();
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getFiles().setHandler(ar -> {
+                r.getFiles().onComplete(ar -> {
                     Collection<File> files = ar.result();
                     String outFile = r.getData().name.trim() + ".zip";
 
@@ -178,7 +175,7 @@ public class SpeechDropApplication {
                 ctx.response().setStatusCode(404).end(EMPTY_INDEX);
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.handleUpload(ctx).setHandler(ar -> {
+                r.handleUpload(ctx).onComplete(ar -> {
                     if (ar.succeeded()) {
                         String index = ar.result();
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON_PRODUCES).end(index);
@@ -203,7 +200,7 @@ public class SpeechDropApplication {
                 if (fileIndex == null) {
                     sendEmptyIndex(ctx, 400);
                 } else {
-                    r.deleteFile(Integer.parseInt(fileIndex)).setHandler(ar -> {
+                    r.deleteFile(Integer.parseInt(fileIndex)).onComplete(ar -> {
                         ctx.response().putHeader(CONTENT_TYPE, APPLICATION_JSON).end(ar.result());
                         broadcaster.publishUpdate(r.getId(), ar.result());
                     });
@@ -229,7 +226,7 @@ public class SpeechDropApplication {
                 redirect(ctx, "/");
             } else {
                 Room r = roomHandler.getRoom(roomId);
-                r.getIndex().setHandler(ar -> {
+                r.getIndex().onComplete(ar -> {
                     String escapedRoomName = HTML_ESCAPER.escape(r.getData().name);
                     JsonObject configPayload = new JsonObject()
                             .put("mediaUrl", mediaUrl)

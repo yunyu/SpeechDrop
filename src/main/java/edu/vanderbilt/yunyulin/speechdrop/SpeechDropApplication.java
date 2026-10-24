@@ -87,6 +87,10 @@ public class SpeechDropApplication {
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
+        // SockJS fallback POSTs require parsed bodies but carry no CSRF tokens.
+        // This bridge permits outbound room updates only, not application writes.
+        router.route("/sock/*").subRouter(broadcaster.getSockJSHandler());
+
         // No authenticated sessions: use signed double-submit CSRF tokens so parallel uploads
         // and multiple tabs do not invalidate each other's tokens.
         router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
@@ -95,7 +99,6 @@ public class SpeechDropApplication {
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)
         );
 
-        router.route("/sock/*").subRouter(broadcaster.getSockJSHandler());
 
         router.route("/static/*").handler(StaticHandler.create("static"));
 

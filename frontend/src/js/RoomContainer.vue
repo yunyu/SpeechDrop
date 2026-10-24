@@ -84,6 +84,7 @@
 import Dropzone from 'dropzone';
 import Cookies from 'js-cookie';
 import EventBus from 'vertx3-eventbus-client';
+import { createUploadOwnershipStore } from './uploadOwnership';
 
 import downloadFolderIcon from '../static/img/download-folder.svg';
 import uploadIcon from '../static/img/upload-icon.svg';
@@ -93,27 +94,14 @@ Dropzone.autoDiscover = false;
 const roomConfig = window.roomConfig;
 
 const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
-const uploadStoragePrefix = roomId => `speechdrop:uploads:${roomId}:`;
-const readOwnedUploads = roomId => {
-    const owned = {};
-    const prefix = uploadStoragePrefix(roomId);
-    try {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith(prefix)) owned[key.slice(prefix.length)] = true;
-        }
-    } catch (_) {
-        // Keep uploads usable when browser storage is unavailable.
-    }
-    return owned;
-};
+const uploadOwnership = createUploadOwnershipStore(roomConfig.roomId);
 
 export default {
     name: 'RoomContainer',
     data() {
         return {
             files: roomConfig.initialFiles.slice(),
-            ownedUploads: readOwnedUploads(roomConfig.roomId),
+            ownedUploads: uploadOwnership.read(),
             confirmDeleteFile: null,
             roomName: roomConfig.roomName,
             roomId: roomConfig.roomId,
@@ -203,8 +191,8 @@ export default {
         };
         document.addEventListener('keydown', this._onKeydown);
         this._onStorage = event => {
-            if (event.key === null || event.key.startsWith(uploadStoragePrefix(this.roomId))) {
-                this.ownedUploads = readOwnedUploads(this.roomId);
+            if (uploadOwnership.handlesStorageEvent(event)) {
+                this.ownedUploads = uploadOwnership.read();
                 if (this.confirmDeleteFile && !this.ownsFile(this.confirmDeleteFile.origPos)) {
                     this.cancelDelete();
                 }
@@ -223,12 +211,7 @@ export default {
             return Boolean(this.ownedUploads[index]);
         },
         rememberUpload(index) {
-            this.ownedUploads[index] = true;
-            try {
-                localStorage.setItem(uploadStoragePrefix(this.roomId) + index, '1');
-            } catch (_) {
-                // Ownership still works in this tab until it is closed or reloaded.
-            }
+            this.ownedUploads = uploadOwnership.add(index);
         },
         deleteFile(fileIndex) {
             if (!this.ownsFile(fileIndex)) return;
@@ -240,12 +223,7 @@ export default {
             r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
             r.onload = () => {
                 if (r.status === 200) {
-                    delete this.ownedUploads[fileIndex];
-                    try {
-                        localStorage.removeItem(uploadStoragePrefix(this.roomId) + fileIndex);
-                    } catch (_) {
-                        // Browser storage is optional.
-                    }
+                    this.ownedUploads = uploadOwnership.remove(fileIndex);
                 }
                 this.updateFiles(r.response);
             };

@@ -82,7 +82,7 @@
 
 <script>
 import Dropzone from 'dropzone';
-import Cookies from 'js-cookie';
+import { fetchWithCsrf, getCsrfToken, refreshCsrfToken } from './csrf';
 import EventBus from 'vertx3-eventbus-client';
 import { createUploadOwnershipStore } from './uploadOwnership';
 
@@ -93,7 +93,6 @@ Dropzone.autoDiscover = false;
 
 const roomConfig = window.roomConfig;
 
-const getCsrfToken = () => Cookies.get('XSRF-TOKEN');
 const uploadOwnership = createUploadOwnershipStore(roomConfig.roomId, roomConfig.purgeIntervalInSeconds);
 
 export default {
@@ -161,7 +160,18 @@ export default {
                         resetDropzone(dropCard.element);
                     }, 2000);
                 },
-                error: (file, errorMsg) => {
+                error: async (file, errorMsg) => {
+                    if (file.xhr && file.xhr.status === 403 && !file.csrfRetried) {
+                        file.csrfRetried = true;
+                        try {
+                            await refreshCsrfToken();
+                            file.status = Dropzone.ADDED;
+                            dropCard.enqueueFile(file);
+                            return;
+                        } catch (error) {
+                            errorMsg = error.message;
+                        }
+                    }
                     resetDropzone(dropCard.element);
                     setUploadText(dropCard.element, 'Upload failed, please retry.');
                     dropCard.element.className += ' dropzone-fail';
@@ -213,21 +223,21 @@ export default {
         rememberUpload(index) {
             this.ownedUploads = uploadOwnership.add(index);
         },
-        deleteFile(fileIndex) {
+        async deleteFile(fileIndex) {
             if (!this.ownsFile(fileIndex)) return;
-            const r = new XMLHttpRequest();
-            r.open('POST', `/${this.roomId}/delete`, true);
-            this.files.splice(fileIndex, 1, null);
-            const data = `fileIndex=${fileIndex}`;
-            r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            r.setRequestHeader('X-XSRF-TOKEN', getCsrfToken());
-            r.onload = () => {
-                if (r.status === 200) {
+            try {
+                const response = await fetchWithCsrf(`/${this.roomId}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `fileIndex=${fileIndex}`
+                });
+                if (response.ok) {
                     this.ownedUploads = uploadOwnership.remove(fileIndex);
+                    this.updateFiles(await response.text());
                 }
-                this.updateFiles(r.response);
-            };
-            r.send(data);
+            } catch (error) {
+                console.log(error);
+            }
             ga('send', 'event', 'Room', 'delete', this.roomId);
         },
         promptDelete(fileEntry) {

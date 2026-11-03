@@ -93,7 +93,14 @@ public class SpeechDropApplication {
 
         // No authenticated sessions: use signed double-submit CSRF tokens so parallel uploads
         // and multiple tabs do not invalidate each other's tokens.
-        router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")));
+        router.route().handler(CSRFHandler.create(vertx, config.getString("csrfSecret")))
+                .failureHandler(ctx -> {
+                    if (ctx.statusCode() == 403) {
+                        ctx.response().setStatusCode(403).end();
+                    } else {
+                        ctx.next();
+                    }
+                });
 
         router.route("/").method(GET).handler(ctx ->
                 ctx.response().putHeader(CONTENT_TYPE, TEXT_HTML).end(mainPage)

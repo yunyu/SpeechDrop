@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import Cookies from 'js-cookie';
+import { fetchWithCsrf } from './csrf';
 
 const maxChars = 6;
 
@@ -63,13 +63,10 @@ export default {
         makeRoom(e) {
             ga('send', 'event', 'Room', 'make');
 
-            const token = Cookies.get('XSRF-TOKEN');
             const body = new FormData(e.target);
 
-            fetch('/makeroom', {
+            fetchWithCsrf('/makeroom', {
                 method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'X-XSRF-TOKEN': token },
                 body
             })
                 .then(resp => {

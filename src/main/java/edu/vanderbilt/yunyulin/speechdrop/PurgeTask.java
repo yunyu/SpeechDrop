@@ -22,7 +22,7 @@ public class PurgeTask {
     public void schedule() {
         Handler<Long> runPurge = id -> {
             List<String> toRemove = roomHandler.getDataStore().entrySet().stream()
-                    .filter(el -> System.currentTimeMillis() - el.getValue().ctime > purgeIntervalInSeconds * 1000)
+                    .filter(el -> System.currentTimeMillis() - el.getValue().ctime > purgeIntervalInSeconds * 1000L)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
             CompositeFuture.all(toRemove.stream().map(roomHandler::queueRoomDeletion).collect(Collectors.toList()))

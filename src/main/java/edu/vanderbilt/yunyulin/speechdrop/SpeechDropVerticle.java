@@ -10,6 +10,10 @@ public class SpeechDropVerticle extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
+        String csrfSecret = System.getenv("CSRF_SECRET");
+        if (csrfSecret != null) {
+            config().put("csrfSecret", csrfSecret);
+        }
         VERSION = vertx.fileSystem().readFileBlocking("VERSION").toString();
         HttpServerOptions serverOptions = new HttpServerOptions();
         serverOptions.setCompressionSupported(true);

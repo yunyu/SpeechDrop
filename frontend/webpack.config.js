@@ -7,7 +7,9 @@ const { VueLoaderPlugin } = require('vue-loader');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
 
+const buildVersion = process.env.BUILD_VERSION;
 const gitRevisionPlugin = new GitRevisionPlugin();
+const version = buildVersion ? buildVersion.slice(0, 7) : gitRevisionPlugin.version();
 
 const faviconPath = path.resolve(__dirname, 'src/static/img/sd-favicon.png');
 
@@ -22,7 +24,7 @@ const pages = [
         name: 'about',
         template: 'about.html',
         chunks: ['commons', 'about'],
-        templateParameters: { VERSION: gitRevisionPlugin.version() }
+        templateParameters: { VERSION: version }
     }
 ];
 
@@ -102,7 +104,7 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        gitRevisionPlugin,
+        ...(!buildVersion ? [gitRevisionPlugin] : []),
         new webpack.DefinePlugin({
             __VUE_OPTIONS_API__: true,
             __VUE_PROD_DEVTOOLS__: false
@@ -113,6 +115,7 @@ module.exports = {
         new VueLoaderPlugin(),
         new CopyWebpackPlugin({
             patterns: [
+                ...(buildVersion ? [{ from: 'package.json', to: 'VERSION', transform: () => version }] : []),
                 {
                     from: faviconPath,
                     to: 'static/img/sd-favicon.png'

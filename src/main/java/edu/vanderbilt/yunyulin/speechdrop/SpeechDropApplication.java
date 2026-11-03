@@ -219,7 +219,11 @@ public class SpeechDropApplication {
         String mediaUrl;
         if (config.getBoolean("debugMediaDownloads")) {
             mediaUrl = "/media/uploads/";
-            router.route("/media/*").handler(StaticHandler.create("public"));
+            router.route("/media/*").handler(ctx -> {
+                ctx.response().putHeader("Content-Disposition", "attachment")
+                        .putHeader("X-Content-Type-Options", "nosniff");
+                ctx.next();
+            }).handler(StaticHandler.create("public"));
         } else {
             mediaUrl = config.getString("mediaUrl");
         }

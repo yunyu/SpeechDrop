@@ -115,7 +115,7 @@ module.exports = {
         new VueLoaderPlugin(),
         new CopyWebpackPlugin({
             patterns: [
-                ...(buildVersion ? [{ from: 'package.json', to: 'VERSION', transform: () => version }] : []),
+                ...(buildVersion ? [{ from: 'package.json', to: 'VERSION', toType: 'file', transform: () => version }] : []),
                 {
                     from: faviconPath,
                     to: 'static/img/sd-favicon.png'

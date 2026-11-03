@@ -53,7 +53,7 @@
                     <a
                         target="_blank"
                         rel="noopener"
-                        :href="`https://docs.google.com/gview?url=${fileEntry.url}`"
+                        :href="`https://docs.google.com/gview?url=${encodeURIComponent(fileEntry.url)}`"
                         class="half card-button card-button-left"
                     >Preview</a>
                     <a :href="fileEntry.url" class="half card-button" download>Download</a>
@@ -273,7 +273,7 @@ export default {
             for (let i = 0; i < this.files.length; i++) {
                 const currEl = this.files[i];
                 if (!currEl) continue;
-                currEl.url = `${baseUrl}/${i}/${currEl.name}`;
+                currEl.url = new URL(`${baseUrl}/${i}/${encodeURIComponent(currEl.name)}`, window.location.origin).href;
                 currEl.origPos = i;
                 currEl.formattedDate = formatDate(currEl.ctime);
                 processed.unshift(currEl);

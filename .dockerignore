@@ -1,0 +1,11 @@
+target
+frontend/node
+frontend/node_modules
+frontend/.yarn
+frontend/dist
+public
+file-uploads
+rooms.json
+config.json
+.idea
+.DS_Store

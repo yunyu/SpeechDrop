@@ -12,10 +12,7 @@
         <frontend.directory>frontend</frontend.directory>
         <vertx.verticle>edu.vanderbilt.yunyulin.speechdrop.SpeechDropVerticle</vertx.verticle>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.testSource>1.8</maven.compiler.testSource>
-        <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
+        <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
     <build>

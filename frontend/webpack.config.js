@@ -1,6 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
@@ -36,6 +35,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
+        clean: true,
         filename: 'static/js/[name].[contenthash].js',
         chunkFilename: 'static/js/[name].[contenthash].js'
     },
@@ -103,7 +103,6 @@ module.exports = {
         }
     },
     plugins: [
-        new CleanWebpackPlugin(),
         ...(!buildVersion ? [gitRevisionPlugin] : []),
         new webpack.DefinePlugin({
             __VUE_OPTIONS_API__: true,

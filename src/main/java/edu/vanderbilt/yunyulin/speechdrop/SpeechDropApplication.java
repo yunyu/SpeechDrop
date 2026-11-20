@@ -25,6 +25,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static io.vertx.core.http.HttpHeaders.LOCATION;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
+import static io.vertx.core.http.HttpMethod.OPTIONS;
 
 public class SpeechDropApplication {
     private static final String EMPTY_INDEX = "[]";
@@ -77,6 +78,11 @@ public class SpeechDropApplication {
         ctx.response().setStatusCode(errCode).putHeader(CONTENT_TYPE, APPLICATION_JSON).end(EMPTY_INDEX);
     }
 
+
+    private void apiError(RoutingContext ctx, int status, String err) {
+        ctx.response().setStatusCode(status).putHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .end(new JsonObject().put("err", err).encode());
+    }
     private void redirect(RoutingContext ctx, String location) {
         ctx.response().setStatusCode(302).putHeader(LOCATION, location).end();
     }
@@ -86,10 +92,70 @@ public class SpeechDropApplication {
         Files.createDirectories(BASE_PATH.toPath());
         new PurgeTask(roomHandler, vertx, config.getInteger("purgeIntervalInSeconds")).schedule();
 
+
+        // CORS for the external upload API only. The API never reads cookies, so allowing any origin
+        // exposes nothing the room code does not already gate. Registered before the body handler so
+        // that errors it raises (e.g. 413) also carry these headers.
+        router.route("/api/v1/*").handler(ctx -> {
+            ctx.response()
+                    .putHeader("Access-Control-Allow-Origin", "*")
+                    .putHeader("Access-Control-Expose-Headers", "X-Uploaded-File-Index");
+            ctx.next();
+        });
+        router.route("/api/v1/*").method(OPTIONS).handler(ctx ->
+                ctx.response()
+                        .putHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+                        .putHeader("Access-Control-Allow-Headers", "Content-Type")
+                        .putHeader("Access-Control-Max-Age", "86400")
+                        .setStatusCode(204)
+                        .end()
+        );
+
+
         router.route().handler(BodyHandler.create().setBodyLimit(maxUploadSize).setDeleteUploadedFilesOnEnd(true));
         // SockJS fallback POSTs require parsed bodies but carry no CSRF tokens.
         // This bridge permits outbound room updates only, not application writes.
         router.route("/sock/*").subRouter(broadcaster.getSockJSHandler());
+
+
+
+        // External upload API (e.g. for CardMirror). Mounted BEFORE the CSRF handler on purpose: CSRF
+        // protects requests that carry ambient credentials (cookies the browser attaches on its own).
+        // This endpoint uses no cookies, so a cross-site request has nothing to ride on. As in the web
+        // UI, knowing the room code is what authorizes an upload.
+        router.route("/api/v1/rooms/:roomid/files").method(POST).handler(ctx -> {
+            String roomId = ctx.request().getParam("roomid");
+            if (!roomHandler.roomExists(roomId)) {
+                apiError(ctx, 404, "room_not_found");
+                return;
+            }
+            Room r = roomHandler.getRoom(roomId);
+            r.handleUpload(ctx).onComplete(ar -> {
+                if (ar.succeeded()) {
+                    String fileIndex = ctx.response().headers().get("X-Uploaded-File-Index");
+                    ctx.response()
+                            .setStatusCode(201)
+                            .putHeader(CONTENT_TYPE, APPLICATION_JSON)
+                            .end(new JsonObject()
+                                    .put("fileIndex", fileIndex == null ? null : Integer.valueOf(fileIndex))
+                                    .put("files", new JsonArray(ar.result()))
+                                    .encode());
+                    broadcaster.publishUpdate(r.getId(), ar.result());
+                } else {
+                    switch (String.valueOf(ar.cause().getMessage())) {
+                        case "bad_type":
+                            apiError(ctx, 415, "bad_type");
+                            break;
+                        case "too_large":
+                            apiError(ctx, 413, "too_large");
+                            break;
+                        default:
+                            apiError(ctx, 400, "no_file");
+                    }
+                }
+            });
+        });
+
 
         // No authenticated sessions: use signed double-submit CSRF tokens so parallel uploads
         // and multiple tabs do not invalidate each other's tokens.

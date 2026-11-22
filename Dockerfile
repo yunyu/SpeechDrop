@@ -15,7 +15,7 @@ COPY . .
 ARG RENDER_GIT_COMMIT
 RUN BUILD_VERSION="$RENDER_GIT_COMMIT" mvn -B -ntp package
 
-FROM eclipse-temurin:21.0.13.1_2-jre-resolute
+FROM eclipse-temurin:21-jre-resolute
 COPY --from=build /build/target/SpeechDrop-1.0-SNAPSHOT.jar /app/speechdrop.jar
 COPY deploy/config.production.json /app/config.json
 WORKDIR /var/data

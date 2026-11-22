@@ -15,16 +15,9 @@ COPY . .
 ARG RENDER_GIT_COMMIT
 RUN BUILD_VERSION="$RENDER_GIT_COMMIT" mvn -B -ntp package
 
-FROM eclipse-temurin:21-jre-resolute
+FROM eclipse-temurin:21.0.13.1_2-jre-resolute
 COPY --from=build /build/target/SpeechDrop-1.0-SNAPSHOT.jar /app/speechdrop.jar
 COPY deploy/config.production.json /app/config.json
-# Temporary mitigation for CVE-2026-114938 until the Temurin base includes its fix.
-# The affected intrinsic is x86-64-specific; leave other architectures unchanged.
-RUN if [ "$(uname -m)" = "x86_64" ]; then \
-        echo '-XX:-UseBASE64Intrinsics' > /app/jvm.options; \
-    else \
-        : > /app/jvm.options; \
-    fi
 WORKDIR /var/data
 EXPOSE 6901
-ENTRYPOINT ["java", "@/app/jvm.options", "-Dfile.encoding=UTF-8", "-jar", "/app/speechdrop.jar", "-conf", "/app/config.json"]
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "/app/speechdrop.jar", "-conf", "/app/config.json"]
